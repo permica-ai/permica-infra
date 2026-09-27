@@ -32,6 +32,16 @@ import {
 }
 
 import {
+  to = module.stack.module.cloud_sql[0].google_sql_database.app
+  id = "projects/${var.project_id}/instances/${var.app_name}-dev-postgres/databases/${var.app_name}"
+}
+
+import {
+  to = module.stack.module.cloud_sql[0].google_sql_user.app
+  id = "projects/${var.project_id}/instances/${var.app_name}-dev-postgres/users/app"
+}
+
+import {
   to = module.stack.module.storage[0].google_storage_bucket.this
   id = "${var.project_id}-data"
 }
