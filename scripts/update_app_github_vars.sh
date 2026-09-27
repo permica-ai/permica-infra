@@ -38,20 +38,17 @@ set_var_for_env() {
   (
     cd "$env_dir"
 
-    # Ensure Terraform backend is initialized if backend.tf is missing or not configured
-    if [ ! -f "$env_dir/backend.tf" ]; then
-      BOOTSTRAP_VARS="$REPO_ROOT/bootstrap/terraform.tfvars"
-      APP_NAME=$(grep -E '^\s*app_name\s*=' "$BOOTSTRAP_VARS" 2>/dev/null | cut -d'=' -f2 | tr -d ' "' || echo "permica-ai")
-      EXISTING_PROJECT=$(gcloud projects list --filter="name=${APP_NAME}-${env_name} AND lifecycleState=ACTIVE" --format="value(projectId)" 2>/dev/null | head -n 1 || true)
-      if [ -n "$EXISTING_PROJECT" ]; then
-        STATE_BUCKET="${EXISTING_PROJECT}-tfstate"
-        cat <<EOF > "$env_dir/backend.tf"
+    # Ensure Terraform backend is initialized with GCS bucket from terraform.tfvars
+    ENV_TFVARS="$env_dir/terraform.tfvars"
+    PROJ_ID=$(grep -E '^\s*project_id\s*=' "$ENV_TFVARS" 2>/dev/null | cut -d'=' -f2 | tr -d ' "' || true)
+    if [ -n "$PROJ_ID" ]; then
+      STATE_BUCKET="${PROJ_ID}-tfstate"
+      cat <<EOF > "$env_dir/backend.tf"
 terraform {
   backend "gcs" {}
 }
 EOF
-        terraform init -reconfigure -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > /dev/null 2>&1 || true
-      fi
+      terraform init -reconfigure -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > /dev/null 2>&1 || true
     fi
 
     if ! terraform output -json app_deploy_github_variables > /dev/null 2>&1; then
