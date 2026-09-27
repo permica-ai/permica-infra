@@ -26,6 +26,7 @@ locals {
     "cloudresourcemanager.googleapis.com",
     "serviceusage.googleapis.com",
     "logging.googleapis.com",
+    "bigquery.googleapis.com",
   ]
 }
 
