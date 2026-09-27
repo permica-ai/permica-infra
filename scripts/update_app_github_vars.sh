@@ -34,22 +34,32 @@ set_var_for_env() {
   (
     cd "$env_dir"
 
-    ENV_TFVARS="$env_dir/terraform.tfvars"
-    PROJ_ID=$(grep -E '^\s*project_id\s*=' "$ENV_TFVARS" 2>/dev/null | cut -d'=' -f2 | tr -d ' "' || true)
-    if [ -n "$PROJ_ID" ]; then
-      STATE_BUCKET="${PROJ_ID}-tfstate"
-      cat <<EOT > "$env_dir/backend.tf"
+    # Fetch project ID from GitHub repo variables first, falling back to local terraform.tfvars
+    INFRA_REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "permica-ai/permica-infra")"
+    PROJ_ID="$(gh variable get "GCP_PROJECT_ID_${env_upper}" --repo "$INFRA_REPO" 2>/dev/null || true)"
+    if [ -z "$PROJ_ID" ]; then
+      PROJ_ID=$(grep -E '^\s*project_id\s*=' "$env_dir/terraform.tfvars" 2>/dev/null | cut -d'=' -f2 | tr -d ' "' || true)
+    fi
+
+    if [ -z "$PROJ_ID" ]; then
+      echo "Error: Unable to determine GCP Project ID for environment '$env_name'." >&2
+      exit 1
+    fi
+
+    STATE_BUCKET="${PROJ_ID}-tfstate"
+
+    cat <<EOT > "$env_dir/backend.tf"
 terraform {
   backend "gcs" {}
 }
 EOT
-      rm -rf "$env_dir/.terraform" "$env_dir/.terraform.lock.hcl"
-      terraform init -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state"
-    fi
+    rm -rf "$env_dir/.terraform" "$env_dir/.terraform.lock.hcl"
+    terraform init -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > /dev/null 2>&1 || true
 
     if ! terraform output -json app_deploy_github_variables > /dev/null 2>&1; then
       echo "Error: Failed to read 'app_deploy_github_variables' output in $env_dir." >&2
       echo "Ensure 'terraform apply' has been run for $env_name." >&2
+      rm -rf "$env_dir/.terraform" "$env_dir/.terraform.lock.hcl"
       exit 1
     fi
 
@@ -58,6 +68,9 @@ EOT
       echo "Setting variable: ${key} on repo ${TARGET_REPO}"
       gh variable set "$key" --body "$val" --repo "$TARGET_REPO"
     done
+
+    # Clean up local workspace artifacts after reading outputs
+    rm -rf "$env_dir/.terraform" "$env_dir/.terraform.lock.hcl"
   )
 }
 
@@ -66,7 +79,7 @@ if [ -n "$TARGET_ENV" ]; then
 else
   set_var_for_env "dev"
   if [ -d "$REPO_ROOT/environments/prod" ]; then
-    set_var_for_env "prod"
+    set_var_for_env "$REPO_ROOT/environments/prod"
   fi
 fi
 
