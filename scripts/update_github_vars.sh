@@ -18,6 +18,21 @@ fi
 
 cd "$BOOTSTRAP_DIR"
 
+# Ensure Terraform backend is initialized if backend.tf is missing
+if [ ! -f "$BOOTSTRAP_DIR/backend.tf" ]; then
+  APP_NAME=$(grep -E '^\s*app_name\s*=' "$BOOTSTRAP_DIR/terraform.tfvars" 2>/dev/null | cut -d'=' -f2 | tr -d ' "' || echo "permica-ai")
+  EXISTING_PROJECT=$(gcloud projects list --filter="name=${APP_NAME}-dev AND lifecycleState=ACTIVE" --format="value(projectId)" 2>/dev/null | head -n 1 || true)
+  if [ -n "$EXISTING_PROJECT" ]; then
+    STATE_BUCKET="${EXISTING_PROJECT}-tfstate"
+    cat <<EOF > "$BOOTSTRAP_DIR/backend.tf"
+terraform {
+  backend "gcs" {}
+}
+EOF
+    terraform init -reconfigure -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=bootstrap/state" > /dev/null 2>&1
+  fi
+fi
+
 echo "==> Fetching terraform outputs from $BOOTSTRAP_DIR..."
 if ! terraform output -json github_variables > /dev/null 2>&1; then
   echo "Error: Failed to read terraform output 'github_variables'. Ensure 'terraform apply' has been run in bootstrap/." >&2

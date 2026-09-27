@@ -61,6 +61,7 @@ module "iam" {
 }
 
 module "artifact_registry" {
+  count  = var.enable_artifact_registry ? 1 : 0
   source = "../artifact-registry"
 
   project_id    = var.project_id
@@ -73,6 +74,7 @@ module "artifact_registry" {
 }
 
 module "cloud_sql" {
+  count  = var.enable_cloud_sql ? 1 : 0
   source = "../cloud-sql"
 
   project_id          = var.project_id
@@ -89,6 +91,7 @@ module "cloud_sql" {
 }
 
 module "storage" {
+  count  = var.enable_storage ? 1 : 0
   source = "../cloud-storage"
 
   project_id         = var.project_id
@@ -118,18 +121,20 @@ module "bigtable" {
 }
 
 module "secrets" {
+  count  = var.enable_secrets ? 1 : 0
   source = "../secret-manager"
 
   project_id      = var.project_id
   secret_ids      = var.app_secrets
   accessor_member = "serviceAccount:${module.iam.runtime_email}"
-  db_password     = module.cloud_sql.password
+  db_password     = var.enable_cloud_sql ? module.cloud_sql[0].password : ""
   labels          = local.labels
 
   depends_on = [module.apis]
 }
 
 module "cloud_run" {
+  count  = var.enable_cloud_run ? 1 : 0
   source = "../cloud-run"
 
   project_id            = var.project_id
@@ -145,39 +150,41 @@ module "cloud_run" {
   deletion_protection   = var.deletion_protection
   labels                = local.labels
 
-  enable_cloud_sql          = true
-  cloud_sql_connection_name = module.cloud_sql.connection_name
+  enable_cloud_sql          = var.enable_cloud_sql
+  cloud_sql_connection_name = var.enable_cloud_sql ? module.cloud_sql[0].connection_name : ""
 
   env_vars = merge(
     {
-      ENVIRONMENT                 = var.environment
-      GCP_PROJECT                 = var.project_id
-      DB_INSTANCE_CONNECTION_NAME = module.cloud_sql.connection_name
-      DB_SOCKET_DIR               = "/cloudsql"
-      DB_NAME                     = module.cloud_sql.database_name
-      DB_USER                     = module.cloud_sql.user_name
-      STORAGE_BUCKET              = module.storage.name
+      ENVIRONMENT = var.environment
+      GCP_PROJECT = var.project_id
     },
+    var.enable_cloud_sql ? {
+      DB_INSTANCE_CONNECTION_NAME = module.cloud_sql[0].connection_name
+      DB_SOCKET_DIR               = "/cloudsql"
+      DB_NAME                     = module.cloud_sql[0].database_name
+      DB_USER                     = module.cloud_sql[0].user_name
+    } : {},
+    var.enable_storage ? { STORAGE_BUCKET = module.storage[0].name } : {},
     var.enable_bigtable ? { BIGTABLE_INSTANCE_ID = module.bigtable[0].instance_name } : {},
   )
 
   secret_env = merge(
-    { DB_PASSWORD = module.secrets.db_password_secret_id },
+    (var.enable_secrets && var.enable_cloud_sql) ? { DB_PASSWORD = module.secrets[0].db_password_secret_id } : {},
     var.extra_secret_env,
   )
 
-  # Secrets (and their IAM) must exist before the service references them.
   depends_on = [module.secrets, module.iam]
 }
 
 module "scheduler" {
+  count  = (var.enable_scheduler && var.enable_cloud_run) ? 1 : 0
   source = "../scheduler"
 
   project_id   = var.project_id
   region       = var.region
   name_prefix  = local.prefix
-  service_name = module.cloud_run.name
-  service_uri  = module.cloud_run.uri
+  service_name = module.cloud_run[0].name
+  service_uri  = module.cloud_run[0].uri
   jobs         = var.scheduler_jobs
 
   depends_on = [module.apis]

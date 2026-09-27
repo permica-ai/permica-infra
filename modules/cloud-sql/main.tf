@@ -34,8 +34,8 @@ resource "google_sql_database_instance" "this" {
       start_time                     = "03:00"
     }
 
-    # Cloud Run connects through the built-in Cloud SQL connector (unix socket),
-    # so no authorized networks are configured and unencrypted traffic is refused.
+    # PostGIS extension is available out of the box in Cloud SQL PostgreSQL.
+    # Flags can be configured here if required.
     ip_configuration {
       ipv4_enabled = true
       ssl_mode     = "ENCRYPTED_ONLY"

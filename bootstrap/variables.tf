@@ -21,13 +21,15 @@ variable "folder_id" {
 }
 
 variable "dev_project_id" {
-  description = "Globally unique project ID for dev, e.g. myapp-dev-123456"
+  description = "Globally unique project ID for dev, e.g. myapp-dev-123456. Leave null to auto-generate."
   type        = string
+  default     = null
 }
 
 variable "prod_project_id" {
-  description = "Globally unique project ID for prod, e.g. myapp-prod-123456"
+  description = "Globally unique project ID for prod, e.g. myapp-prod-123456. Leave null to auto-generate."
   type        = string
+  default     = null
 }
 
 variable "region" {

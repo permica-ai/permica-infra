@@ -1,4 +1,4 @@
-# permica-ril-infra
+# permica-infra
 
 Terraform for a Python API on Google Cloud, with separate **dev** and **prod**
 environments that a team can share safely.
@@ -8,14 +8,83 @@ Cloud Run · Cloud SQL (PostgreSQL 17) · Cloud Storage · Bigtable (optional) �
 Secret Manager · Cloud Scheduler · Artifact Registry · service accounts ·
 GitHub → GCP authentication via Workload Identity Federation (no JSON keys).
 
+```text
+.
+├── bootstrap/            # Run ONCE by human: GCP projects, state buckets, GitHub OIDC & CI SAs
+├── modules/              # Reusable Terraform modules
+│   ├── apis/             # GCP API enablement
+│   ├── artifact-registry/# Docker image registry
+│   ├── bigtable/         # Cloud Bigtable instances & tables
+│   ├── cloud-run/        # Cloud Run microservice deployment
+│   ├── cloud-sql/        # Cloud SQL (PostgreSQL 17) database
+│   ├── cloud-storage/    # Cloud Storage buckets
+│   ├── iam/              # IAM service accounts & role bindings
+│   ├── scheduler/        # Cloud Scheduler cron jobs
+│   ├── secret-manager/   # Secret Manager secrets
+│   └── stack/            # Composes all modules into a full environment stack
+├── environments/         # Environment configurations
+│   ├── dev/              # Dev layer (calls modules/stack with disposable settings)
+│   └── prod/             # Prod layer (calls modules/stack with HA & scaling settings)
+├── scripts/              # Automation helper bash scripts (bootstrap, destroy, update/delete GitHub & app vars, fetch secrets)
+│   ├── bootstrap.sh
+│   ├── delete_github_vars.sh
+│   ├── destroy.sh
+│   ├── get_secret.sh
+│   ├── update_app_github_vars.sh
+│   └── update_github_vars.sh
+├── .github/workflows/    # CI/CD pipelines (terraform-dev.yml, terraform-prod.yml)
+└── docs/                 # Guides & example workflows (app deployment, component upgrades)
 ```
-bootstrap/            run ONCE by a human: projects, state buckets, GitHub OIDC, CI service accounts
-modules/              reusable building blocks (apis, iam, cloud-run, cloud-sql, ...)
-  stack/              composes all modules into one full environment
-environments/dev      calls modules/stack with small, disposable settings
-environments/prod     calls modules/stack with protected, production-sized settings
-.github/workflows/    terraform-dev.yml, terraform-prod.yml
-docs/                 deploy-app.example.yml (build + deploy the Python app)
+
+## Architecture Diagram
+
+```mermaid
+flowchart TD
+    subgraph GitHub["GitHub Actions CI/CD"]
+        PR["Pull Request (develop / main)"] -->|OIDC Auth / WIF| Plan["terraform plan (read-only)"]
+        Merge["Merge (develop / main)"] -->|OIDC Auth / WIF| Apply["terraform apply"]
+    end
+
+    subgraph GCP["Google Cloud Platform (GCP)"]
+        subgraph Bootstrap["Bootstrap Infrastructure"]
+            Pool["Workload Identity Pool (github)"]
+            PoolProvider["Workload Identity Provider"]
+            StateBucketDev[("GCS State Bucket (dev)")]
+            StateBucketProd[("GCS State Bucket (prod)")]
+        end
+
+        subgraph DevProject["Dev Project (permica-ai-dev)"]
+            subgraph ServicesDev["Application Stack (dev)"]
+                CR_Dev["Cloud Run (Python API)"]
+                DB_Dev[("Cloud SQL (Postgres 17)")]
+                GCS_Dev[("Cloud Storage Bucket")]
+                SM_Dev["Secret Manager (db-password, jwt-secret)"]
+                AR_Dev["Artifact Registry"]
+                BT_Dev[("Bigtable (optional)")]
+            end
+        end
+
+        subgraph ProdProject["Prod Project (permica-ai-prod)"]
+            subgraph ServicesProd["Application Stack (prod)"]
+                CR_Prod["Cloud Run (Python API)"]
+                DB_Prod[("Cloud SQL HA (Postgres 17)")]
+                GCS_Prod[("Cloud Storage Bucket")]
+                SM_Prod["Secret Manager (db-password, jwt-secret)"]
+                AR_Prod["Artifact Registry"]
+                BT_Prod[("Bigtable (optional)")]
+            end
+        end
+    end
+
+    Apply -->|Deploy Dev| DevProject
+    Apply -->|Deploy Prod| ProdProject
+    CR_Dev -->|Unix Socket / Cloud SQL Connector| DB_Dev
+    CR_Dev -->|Mount Secrets| SM_Dev
+    CR_Dev -->|Read/Write| GCS_Dev
+
+    CR_Prod -->|Unix Socket / Cloud SQL Connector| DB_Prod
+    CR_Prod -->|Mount Secrets| SM_Prod
+    CR_Prod -->|Read/Write| GCS_Prod
 ```
 
 ## How several people share it safely
@@ -50,12 +119,15 @@ You need: `gcloud`, Terraform ≥ 1.9, a GCP billing account, and a GitHub repo 
    ```bash
    cd bootstrap
    cp terraform.tfvars.example terraform.tfvars   # edit: app name, billing account, project IDs, github repo
-   terraform init && terraform apply
+   cd ..
+
+   # Option A: Provision a SINGLE environment (e.g. dev):
+   ./scripts/bootstrap.sh dev
+
+   # Option B: Provision ALL environments (dev & prod):
+   ./scripts/bootstrap.sh
    ```
-   This creates both projects, both state buckets, the GitHub OIDC trust, and the CI
-   service accounts, and **rewrites `environments/*/backend.tf`** with the real bucket names.
-   Keep `bootstrap/terraform.tfstate` somewhere safe (it is git-ignored). To use projects
-   that already exist, `terraform import 'google_project.env["dev"]' <project-id>` first.
+   This provisions the GCP project, state bucket, GitHub OIDC trust, and CI service accounts for the targeted environment(s). State is automatically migrated to the GCS state bucket, and temporary local files (`backend.tf`, `.terraform/`, `terraform.tfstate`) are cleaned up automatically upon completion. To use an existing project, run `terraform import 'google_project.env["dev"]' <project-id>` first.
 
 3. **Tell GitHub about it**
    - Set variables via helper script or `gh` CLI:
@@ -72,7 +144,7 @@ You need: `gcloud`, Terraform ≥ 1.9, a GCP billing account, and a GitHub repo 
 4. **Fill in the environments**
    Edit `environments/dev/terraform.tfvars` and `environments/prod/terraform.tfvars`
    (project IDs must match step 2; put your team's Google Groups in the member lists).
-   Commit everything, including the generated `backend.tf` files.
+   Commit your changes to version control.
 
 5. **First deploy — through CI**
    Push/merge to `develop` (creates dev), then open a PR `develop → main` and merge it
@@ -88,6 +160,13 @@ You need: `gcloud`, Terraform ≥ 1.9, a GCP billing account, and a GitHub repo 
 - Terraform never redeploys your application. CI owns the running image (Terraform ignores
   image changes on Cloud Run). Use `docs/deploy-app.example.yml` in your app repo.
   `terraform output app_deploy_github_variables` (in each environment folder) prints the values it needs.
+- **Sync Application Repo Variables**:
+  Set/update application repository GitHub Action variables (e.g., for `permica-core`) using:
+  ```bash
+  ./scripts/update_app_github_vars.sh <target-repo> [dev|prod]
+  # Example:
+  ./scripts/update_app_github_vars.sh Vijay-E-Permica/permica-core dev
+  ```
 
 ## Secrets
 
@@ -129,6 +208,22 @@ Terraform automatically injects the following environment variables into your Cl
 
 
 
+## Feature Flags & Component Modularization
+
+Infrastructure components can be conditionally toggled using boolean feature flags in your environment's `terraform.tfvars` file. This allows SREs to provision minimal stacks (e.g. disabling Bigtable or Cloud SQL in temporary dev/test environments).
+
+| Feature Flag | Default | Description | Impact when `false` |
+|---|---|---|---|
+| `enable_cloud_sql` | `true` | PostgreSQL (Cloud SQL) instance | No database created; DB connection environment variables omitted from Cloud Run. |
+| `enable_cloud_run` | `true` | Cloud Run container microservice | Microservice deployment skipped. |
+| `enable_storage` | `true` | Cloud Storage bucket | Bucket creation skipped; `STORAGE_BUCKET` env var omitted. |
+| `enable_artifact_registry` | `true` | Docker Artifact Registry repo | Container registry creation skipped. |
+| `enable_scheduler` | `true` | Cloud Scheduler cron jobs | Cron job creation skipped. |
+| `enable_secrets` | `true` | Secret Manager secrets | Secrets container creation skipped. |
+| `enable_bigtable` | `false` (dev) / `true` (prod) | Bigtable instance & tables | Bigtable instance creation skipped; saves ~$300+/month per node in dev. |
+
+> **Usage**: Set feature flags in `environments/<env>/terraform.tfvars` (e.g. `enable_bigtable = false`).
+
 ## Cost notes
 
 Key infrastructure settings configured to prevent unexpected GCP billing charges:
@@ -139,7 +234,7 @@ Key infrastructure settings configured to prevent unexpected GCP billing charges
 | **Cloud SQL** | Single-zone (`db-f1-micro`) | Regional High-Availability (`db-custom-2-7680`) | Prod runs HA failover instance for reliability; dev runs low-cost micro tier. |
 | **Cloud Run** | Scales to `0` (`min_instances = 0`) | Keeps warm (`min_instances = 1`) | Dev incurs zero compute costs when idle; prod stays warm to avoid cold starts. |
 
-> **Cost Optimization Tip**: Adjust instance sizes and scaling parameters in `environments/dev/terraform.tfvars` and `environments/prod/terraform.tfvars` based on actual traffic requirements.
+> **Cost Optimization & Sizing Tip**: Adjust instance sizes and scaling parameters in `environments/dev/terraform.tfvars` and `environments/prod/terraform.tfvars` based on actual traffic requirements. For step-by-step instructions on scaling Cloud SQL tiers, disk space, or compute resources without data loss, see the [Upgrading Components Guide](docs/upgrading-components.md).
 
 
 
@@ -223,32 +318,21 @@ Sync the environment's Terraform outputs to GitHub Actions repo variables:
 ## Destroying an environment
 
 > [!WARNING]
-> Destroying an environment permanently removes all infrastructure resources (Cloud SQL databases, Cloud Storage buckets, Cloud Run services). Ensure you back up critical data prior to destruction.
+> Destroying an environment permanently removes all infrastructure resources (Cloud SQL databases, Cloud Storage buckets, Cloud Run services), state buckets, GitHub variables, and the GCP project. Ensure you back up critical data prior to destruction.
 
 To dismantle and delete a specific environment (e.g., `dev` or a custom environment like `staging`):
 
-### Step 1: Destroy Environment Infrastructure
-Navigate to the environment directory and run `terraform destroy`:
+### Option A: Via Helper Bash Script (Recommended)
+Run the automated teardown script for the target environment:
 ```bash
-cd environments/dev
-terraform init
-terraform destroy
+./scripts/destroy.sh dev      # Teardown dev environment & project
+./scripts/destroy.sh staging  # Teardown staging environment & project
 ```
 
-### Step 2: (Optional) Remove Environment from Bootstrap & GCP Project
-If you wish to completely remove the project, state bucket, and CI service accounts for that environment:
-1. Delete the GitHub repository variables associated with the environment:
-   ```bash
-   ./scripts/delete_github_vars.sh dev   # Replace 'dev' with target env (e.g. staging)
-   ```
-2. Remove the environment entry from `locals.envs` in [bootstrap/main.tf](bootstrap/main.tf).
-3. Apply the change in `bootstrap/`:
-   ```bash
-   cd bootstrap
-   terraform apply
-   ```
-   *(Note: `deletion_protection` is enabled for production projects by default; set `deletion_policy = "DELETE"` or remove project protection if destroying prod).*
-4. Remove the corresponding workflow file `.github/workflows/terraform-<env>.yml`.
+### Option B: Via GitHub Actions (Manual Workflow Dispatch)
+1. Go to **GitHub Repo -> Actions -> Terraform Destroy (dev)**.
+2. Click **Run workflow**.
+3. Type **`DESTROY`** in the confirmation prompt input and click **Run workflow**.
 
 ## Status
 

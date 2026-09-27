@@ -28,6 +28,42 @@ variable "admin_members" {
   default     = []
 }
 
+variable "enable_cloud_sql" {
+  description = "Enable PostgreSQL (Cloud SQL) database."
+  type        = bool
+  default     = true
+}
+
+variable "enable_cloud_run" {
+  description = "Enable Cloud Run service."
+  type        = bool
+  default     = true
+}
+
+variable "enable_storage" {
+  description = "Enable Cloud Storage bucket."
+  type        = bool
+  default     = true
+}
+
+variable "enable_artifact_registry" {
+  description = "Enable Artifact Registry repository."
+  type        = bool
+  default     = true
+}
+
+variable "enable_scheduler" {
+  description = "Enable Cloud Scheduler jobs."
+  type        = bool
+  default     = true
+}
+
+variable "enable_secrets" {
+  description = "Enable Secret Manager secrets."
+  type        = bool
+  default     = true
+}
+
 variable "enable_bigtable" {
   description = "Bigtable has a high minimum cost (~1 node always on). Turn off if you do not need it here."
   type        = bool
@@ -56,3 +92,10 @@ variable "extra_secret_env" {
   type        = map(string)
   default     = {}
 }
+
+variable "allow_public_access" {
+  description = "Allow unauthenticated HTTP calls to Cloud Run (set false if forbidden by org policy)."
+  type        = bool
+  default     = false
+}
+

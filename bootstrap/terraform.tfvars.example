@@ -1,10 +1,11 @@
 # Copy to terraform.tfvars and fill in. terraform.tfvars is git-ignored.
-app_name        = "permica"
+app_name        = "permica-ai"
 billing_account = "0123AB-4567CD-89EF01"
 github_repo     = "myorg/myapp-infra"
 
-dev_project_id  = "myapp-dev-123456"
-prod_project_id = "myapp-prod-123456"
+# Optional: explicitly set project IDs (if left out, auto-generated as <app>-<env>-<unique_hex>):
+# dev_project_id  = "myapp-dev-123456"
+# prod_project_id = "myapp-prod-123456"
 
 region = "us-east1"
 

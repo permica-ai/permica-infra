@@ -1,12 +1,12 @@
-project_id  = "myapp-dev-123456" # must match bootstrap dev_project_id
+project_id  = "permica-ai-dev-134567" # must match bootstrap dev_project_id
 region      = "us-east1"
-app_name    = "myapp"
-github_repo = "myorg/myapp-infra" # repo that builds/deploys the app
+app_name    = "permica-ai"
+github_repo = "permica-ai/permica-infra" # repo that builds/deploys the app
 
 # Use Google Groups so adding a teammate never requires a Terraform change.
 # Without Workspace/Cloud Identity, list individuals instead: "user:jane@gmail.com"
-developer_members = ["group:myapp-devs@example.com"]
-admin_members     = ["group:myapp-admins@example.com"]
+developer_members = []
+admin_members     = []
 
 # Bigtable costs roughly a node's price 24/7. Set true only if dev needs it.
 enable_bigtable = false

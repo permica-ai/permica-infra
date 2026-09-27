@@ -1,10 +1,10 @@
-project_id  = "myapp-prod-123456" # must match bootstrap prod_project_id
+project_id  = "permica-ai-prod-134567" # must match bootstrap prod_project_id
 region      = "us-east1"
-app_name    = "myapp"
-github_repo = "myorg/myapp-infra" # repo that builds/deploys the app
+app_name    = "permica-ai"
+github_repo = "permica-ai/permica-infra" # repo that builds/deploys the app
 
-developer_members = ["group:myapp-devs@example.com"]
-admin_members     = ["group:myapp-admins@example.com"]
+developer_members = []
+admin_members     = []
 
 enable_bigtable = true
 

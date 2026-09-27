@@ -85,6 +85,43 @@ variable "sql_disk_size" {
   default = 20
 }
 
+# ---- Component Toggles (SRE feature flags)
+variable "enable_cloud_sql" {
+  description = "Enable PostgreSQL (Cloud SQL) instance."
+  type        = bool
+  default     = true
+}
+
+variable "enable_cloud_run" {
+  description = "Enable Cloud Run service deployment."
+  type        = bool
+  default     = true
+}
+
+variable "enable_storage" {
+  description = "Enable Cloud Storage bucket."
+  type        = bool
+  default     = true
+}
+
+variable "enable_artifact_registry" {
+  description = "Enable Artifact Registry repository for container images."
+  type        = bool
+  default     = true
+}
+
+variable "enable_scheduler" {
+  description = "Enable Cloud Scheduler cron jobs."
+  type        = bool
+  default     = true
+}
+
+variable "enable_secrets" {
+  description = "Enable Secret Manager secrets provisioning."
+  type        = bool
+  default     = true
+}
+
 # ---- Bigtable
 variable "enable_bigtable" {
   type    = bool
