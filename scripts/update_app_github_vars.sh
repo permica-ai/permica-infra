@@ -3,14 +3,10 @@ set -euo pipefail
 
 # Helper script to set GitHub Actions repository variables for application repositories (e.g., permica-core).
 # Usage: ./scripts/update_app_github_vars.sh <target-repo> [env]
-# Examples:
-#   ./scripts/update_app_github_vars.sh Vijay-E-Permica/permica-core dev
-#   ./scripts/update_app_github_vars.sh Vijay-E-Permica/permica-core prod
-#   ./scripts/update_app_github_vars.sh Vijay-E-Permica/permica-core      # updates variables for dev and prod
 
 if [ "$#" -lt 1 ]; then
   echo "Usage: $0 <target-repo> [env: dev|prod]" >&2
-  echo "Example: $0 Vijay-E-Permica/permica-core dev" >&2
+  echo "Example: $0 permica-ai/permica-core dev" >&2
   exit 1
 fi
 
@@ -38,18 +34,17 @@ set_var_for_env() {
   (
     cd "$env_dir"
 
-    # Ensure Terraform backend is initialized with GCS bucket from terraform.tfvars
     ENV_TFVARS="$env_dir/terraform.tfvars"
     PROJ_ID=$(grep -E '^\s*project_id\s*=' "$ENV_TFVARS" 2>/dev/null | cut -d'=' -f2 | tr -d ' "' || true)
     if [ -n "$PROJ_ID" ]; then
       STATE_BUCKET="${PROJ_ID}-tfstate"
-      cat <<EOF > "$env_dir/backend.tf"
+      cat <<EOT > "$env_dir/backend.tf"
 terraform {
   backend "gcs" {}
 }
-EOF
-      rm -rf "$env_dir/.terraform"
-      terraform init -reconfigure -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state"
+EOT
+      rm -rf "$env_dir/.terraform" "$env_dir/.terraform.lock.hcl"
+      terraform init -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state"
     fi
 
     if ! terraform output -json app_deploy_github_variables > /dev/null 2>&1; then
