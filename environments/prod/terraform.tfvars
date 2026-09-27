@@ -1,7 +1,7 @@
 project_id  = "permica-ai-prod-134567" # must match bootstrap prod_project_id
 region      = "us-east1"
 app_name    = "permica-ai"
-github_repo = "Vijay-E-Permica/permica-ril-infra" # repo that builds/deploys the app
+github_repo = "permica-ai/permica-infra" # repo that builds/deploys the app
 
 developer_members = []
 admin_members     = []

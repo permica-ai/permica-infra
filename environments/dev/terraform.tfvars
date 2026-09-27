@@ -1,7 +1,7 @@
 project_id  = "permica-ai-dev-134567" # must match bootstrap dev_project_id
 region      = "us-east1"
 app_name    = "permica-ai"
-github_repo = "Vijay-E-Permica/permica-ril-infra" # repo that builds/deploys the app
+github_repo = "permica-ai/permica-infra" # repo that builds/deploys the app
 
 # Use Google Groups so adding a teammate never requires a Terraform change.
 # Without Workspace/Cloud Identity, list individuals instead: "user:jane@gmail.com"

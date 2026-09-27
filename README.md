@@ -1,4 +1,4 @@
-# permica-ril-infra
+# permica-infra
 
 Terraform for a Python API on Google Cloud, with separate **dev** and **prod**
 environments that a team can share safely.
