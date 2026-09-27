@@ -61,7 +61,7 @@ resource "google_service_account_iam_member" "deployer_act_as_runtime" {
 resource "google_service_account_iam_member" "deployer_wif" {
   service_account_id = google_service_account.deployer.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.wif_pool_name}/attribute.repo_ref/${var.github_repo}@refs/heads/${var.deploy_branch}"
+  member             = "principalSet://iam.googleapis.com/${var.wif_pool_name}/attribute.repository/${var.github_repo}"
 }
 
 # ---- human access

@@ -191,8 +191,8 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "attribute.repo_ref"   = "assertion.repository + '@' + assertion.ref"
   }
 
-  # Tokens from any other repository are rejected outright.
-  attribute_condition = "assertion.repository == '${var.github_repo}'"
+  # Tokens from repos outside the permica-ai organization are rejected outright.
+  attribute_condition = "assertion.repository_owner == 'permica-ai'"
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
