@@ -37,6 +37,23 @@ set_var_for_env() {
   echo "==> Fetching terraform outputs for environment '$env_name'..."
   (
     cd "$env_dir"
+
+    # Ensure Terraform backend is initialized if backend.tf is missing or not configured
+    if [ ! -f "$env_dir/backend.tf" ]; then
+      BOOTSTRAP_VARS="$REPO_ROOT/bootstrap/terraform.tfvars"
+      APP_NAME=$(grep -E '^\s*app_name\s*=' "$BOOTSTRAP_VARS" 2>/dev/null | cut -d'=' -f2 | tr -d ' "' || echo "permica-ai")
+      EXISTING_PROJECT=$(gcloud projects list --filter="name=${APP_NAME}-${env_name} AND lifecycleState=ACTIVE" --format="value(projectId)" 2>/dev/null | head -n 1 || true)
+      if [ -n "$EXISTING_PROJECT" ]; then
+        STATE_BUCKET="${EXISTING_PROJECT}-tfstate"
+        cat <<EOF > "$env_dir/backend.tf"
+terraform {
+  backend "gcs" {}
+}
+EOF
+        terraform init -reconfigure -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=$env_name/state" > /dev/null 2>&1 || true
+      fi
+    fi
+
     if ! terraform output -json app_deploy_github_variables > /dev/null 2>&1; then
       echo "Error: Failed to read 'app_deploy_github_variables' output in $env_dir." >&2
       echo "Ensure 'terraform apply' has been run for $env_name." >&2
