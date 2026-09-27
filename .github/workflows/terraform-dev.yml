@@ -4,6 +4,7 @@ name: Terraform (dev)
 # push to develop  -> apply to the dev project
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [develop]
     paths:

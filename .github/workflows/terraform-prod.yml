@@ -5,6 +5,7 @@ name: Terraform (prod)
 #                  "production" GitHub Environment.
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
     paths:
