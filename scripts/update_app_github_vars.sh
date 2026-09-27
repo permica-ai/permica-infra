@@ -20,6 +20,15 @@ if ! command -v gh &> /dev/null; then
   exit 1
 fi
 
+# Clean up stale local terraform cache and lock files across environments before reading outputs
+clean_local_cache() {
+  echo "==> Cleaning local Terraform cache & lock files..."
+  rm -rf "$REPO_ROOT/environments/dev/.terraform" "$REPO_ROOT/environments/dev/.terraform.lock.hcl" 2>/dev/null || true
+  rm -rf "$REPO_ROOT/environments/prod/.terraform" "$REPO_ROOT/environments/prod/.terraform.lock.hcl" 2>/dev/null || true
+}
+
+clean_local_cache
+
 set_var_for_env() {
   local env_name="$1"
   local env_dir="$REPO_ROOT/environments/$env_name"
