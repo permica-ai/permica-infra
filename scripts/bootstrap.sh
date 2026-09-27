@@ -120,6 +120,30 @@ fi
 echo "==> Updating GitHub repository variables..."
 "$REPO_ROOT/scripts/update_github_vars.sh" "$TARGET_ENV"
 
+# Automatically sync newly generated project_id to environment terraform.tfvars file
+sync_env_project_id() {
+  local env_name="$1"
+  local env_upper="$(echo "$env_name" | tr '[:lower:]' '[:upper:]')"
+  local env_tfvars="$REPO_ROOT/environments/$env_name/terraform.tfvars"
+  
+  if [ -f "$env_tfvars" ]; then
+    local new_proj_id
+    new_proj_id=$(gh variable get "GCP_PROJECT_ID_${env_upper}" --repo "$(gh repo view --json nameWithOwner -q .nameWithOwner)" 2>/dev/null || true)
+    if [ -n "$new_proj_id" ]; then
+      echo "==> Updating $env_tfvars with project_id = '$new_proj_id'..."
+      sed -i '' "s/^\s*project_id\s*=.*/project_id  = \"$new_proj_id\" # must match bootstrap ${env_name}_project_id/" "$env_tfvars" 2>/dev/null || \
+      sed -i "s/^\s*project_id\s*=.*/project_id  = \"$new_proj_id\" # must match bootstrap ${env_name}_project_id/" "$env_tfvars"
+    fi
+  fi
+}
+
+if [ -n "$TARGET_ENV" ]; then
+  sync_env_project_id "$TARGET_ENV"
+else
+  sync_env_project_id "dev"
+  sync_env_project_id "prod"
+fi
+
 # Clean up local temporary state and backend configuration
 rm -f "$BOOTSTRAP_DIR/backend.tf" "$BOOTSTRAP_DIR/terraform.tfstate" "$BOOTSTRAP_DIR/terraform.tfstate.backup"
 rm -rf "$BOOTSTRAP_DIR/.terraform"
