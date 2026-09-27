@@ -33,5 +33,5 @@ import {
 
 import {
   to = module.stack.module.storage[0].google_storage_bucket.this
-  id = "projects/${var.project_id}/buckets/${var.project_id}-data"
+  id = "${var.project_id}-data"
 }
