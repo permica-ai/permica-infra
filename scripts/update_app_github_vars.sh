@@ -48,6 +48,7 @@ terraform {
   backend "gcs" {}
 }
 EOF
+      rm -rf "$env_dir/.terraform"
       terraform init -reconfigure -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state"
     fi
 
