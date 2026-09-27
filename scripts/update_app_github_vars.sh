@@ -48,7 +48,7 @@ terraform {
   backend "gcs" {}
 }
 EOF
-      terraform init -reconfigure -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > /dev/null 2>&1 || true
+      terraform init -reconfigure -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state"
     fi
 
     if ! terraform output -json app_deploy_github_variables > /dev/null 2>&1; then
