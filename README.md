@@ -208,6 +208,22 @@ Terraform automatically injects the following environment variables into your Cl
 
 
 
+## Feature Flags & Component Modularization
+
+Infrastructure components can be conditionally toggled using boolean feature flags in your environment's `terraform.tfvars` file. This allows SREs to provision minimal stacks (e.g. disabling Bigtable or Cloud SQL in temporary dev/test environments).
+
+| Feature Flag | Default | Description | Impact when `false` |
+|---|---|---|---|
+| `enable_cloud_sql` | `true` | PostgreSQL (Cloud SQL) instance | No database created; DB connection environment variables omitted from Cloud Run. |
+| `enable_cloud_run` | `true` | Cloud Run container microservice | Microservice deployment skipped. |
+| `enable_storage` | `true` | Cloud Storage bucket | Bucket creation skipped; `STORAGE_BUCKET` env var omitted. |
+| `enable_artifact_registry` | `true` | Docker Artifact Registry repo | Container registry creation skipped. |
+| `enable_scheduler` | `true` | Cloud Scheduler cron jobs | Cron job creation skipped. |
+| `enable_secrets` | `true` | Secret Manager secrets | Secrets container creation skipped. |
+| `enable_bigtable` | `false` (dev) / `true` (prod) | Bigtable instance & tables | Bigtable instance creation skipped; saves ~$300+/month per node in dev. |
+
+> **Usage**: Set feature flags in `environments/<env>/terraform.tfvars` (e.g. `enable_bigtable = false`).
+
 ## Cost notes
 
 Key infrastructure settings configured to prevent unexpected GCP billing charges:
