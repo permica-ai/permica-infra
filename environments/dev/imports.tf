@@ -45,3 +45,8 @@ import {
   to = module.stack.module.storage[0].google_storage_bucket.this
   id = "${var.project_id}-data"
 }
+
+import {
+  to = module.stack.module.cloud_run[0].google_cloud_run_v2_service.this
+  id = "projects/${var.project_id}/locations/${var.region}/services/${var.app_name}-dev-api"
+}
