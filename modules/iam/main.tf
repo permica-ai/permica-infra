@@ -44,6 +44,18 @@ resource "google_project_iam_member" "runtime_bigtable" {
   member  = "serviceAccount:${google_service_account.runtime.email}"
 }
 
+resource "google_project_iam_member" "runtime_bigquery_jobuser" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.runtime.email}"
+}
+
+resource "google_project_iam_member" "runtime_bigquery_dataeditor" {
+  project = var.project_id
+  role    = "roles/bigquery.dataEditor"
+  member  = "serviceAccount:${google_service_account.runtime.email}"
+}
+
 # ---- deployer permissions
 resource "google_project_iam_member" "deployer_run" {
   project = var.project_id
