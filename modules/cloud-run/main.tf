@@ -102,3 +102,17 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+data "google_project" "project" {
+  project_id = var.project_id
+}
+
+# Grant Cloud Run invoker role to default compute SA (used by Cloud Scheduler for OIDC auth)
+resource "google_cloud_run_v2_service_iam_member" "compute_invoker" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.this.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}
+

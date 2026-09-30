@@ -69,6 +69,18 @@ resource "google_service_account_iam_member" "deployer_act_as_runtime" {
   member             = "serviceAccount:${google_service_account.deployer.email}"
 }
 
+data "google_project" "project" {
+  project_id = var.project_id
+}
+
+# Allow deployer SA to set compute SA on Cloud Scheduler jobs (OIDC token SA)
+resource "google_service_account_iam_member" "deployer_act_as_compute" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.deployer.email}"
+}
+
+
 # GitHub OIDC -> deployer: only this repo and only the environment's deploy branch.
 resource "google_service_account_iam_member" "deployer_wif" {
   service_account_id = google_service_account.deployer.name
