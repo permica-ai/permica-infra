@@ -50,6 +50,12 @@ resource "google_project_iam_member" "runtime_bigquery_jobuser" {
   member  = "serviceAccount:${google_service_account.runtime.email}"
 }
 
+resource "google_project_iam_member" "runtime_bigquery_user" {
+  project = var.project_id
+  role    = "roles/bigquery.user"
+  member  = "serviceAccount:${google_service_account.runtime.email}"
+}
+
 resource "google_project_iam_member" "runtime_bigquery_dataeditor" {
   project = var.project_id
   role    = "roles/bigquery.dataEditor"
