@@ -14,6 +14,14 @@ resource "google_cloud_run_v2_service_iam_member" "gateway_invoker" {
   member   = "serviceAccount:${google_service_account.gateway.email}"
 }
 
+# Grant Service Control Reporter permission to API Gateway SA for API Key validation
+resource "google_project_iam_member" "gateway_service_control" {
+  project = var.project_id
+  role    = "roles/servicecontrol.serviceControlReporter"
+  member  = "serviceAccount:${google_service_account.gateway.email}"
+}
+
+
 # API Gateway API Container
 resource "google_api_gateway_api" "api" {
   provider     = google-beta

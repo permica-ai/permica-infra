@@ -29,6 +29,7 @@ locals {
     "bigquery.googleapis.com",
     "apigateway.googleapis.com",
     "servicemanagement.googleapis.com",
+    "servicecontrol.googleapis.com",
     "apikeys.googleapis.com",
   ]
 }
