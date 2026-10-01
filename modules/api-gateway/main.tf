@@ -31,6 +31,14 @@ resource "google_api_gateway_api" "api" {
   labels       = var.labels
 }
 
+# Enable API Gateway Managed Service on the project so API Keys can invoke it
+resource "google_project_service" "api_managed_service" {
+  project                    = var.project_id
+  service                    = google_api_gateway_api.api.managed_service
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
 # API Gateway Config (OpenAPI Spec)
 resource "google_api_gateway_api_config" "api_cfg" {
   provider             = google-beta
