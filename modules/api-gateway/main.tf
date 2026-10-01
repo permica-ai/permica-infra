@@ -74,6 +74,11 @@ resource "google_api_gateway_gateway" "gateway" {
   labels       = var.labels
 }
 
+# Hourly rotation trigger for API Key
+resource "time_rotating" "api_key_rotation" {
+  rotation_hours = 1
+}
+
 # Provision API Key for API Gateway
 resource "google_apikeys_key" "api_key" {
   name         = "${var.api_name}-${var.environment}-key"
@@ -84,6 +89,12 @@ resource "google_apikeys_key" "api_key" {
     api_targets {
       service = google_api_gateway_api.api.managed_service
     }
+  }
+
+  lifecycle {
+    replace_triggered_by = [
+      time_rotating.api_key_rotation.rotation_rfc3339
+    ]
   }
 }
 
