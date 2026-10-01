@@ -88,7 +88,7 @@ if [ -n "$TARGET_ENV" ]; then
 else
   set_var_for_env "dev"
   if [ -d "$REPO_ROOT/environments/prod" ]; then
-    set_var_for_env "$REPO_ROOT/environments/prod"
+    set_var_for_env "prod"
   fi
 fi
 
