@@ -58,6 +58,9 @@ paths:
         address: "${cloud_run_url}/api/{path}"
       security:
         - api_key: []
+      responses:
+        '200':
+          description: OK
     post:
       summary: Proxy POST API Endpoints
       operationId: proxy_post_api
@@ -70,6 +73,9 @@ paths:
         address: "${cloud_run_url}/api/{path}"
       security:
         - api_key: []
+      responses:
+        '200':
+          description: OK
     put:
       summary: Proxy PUT API Endpoints
       operationId: proxy_put_api
@@ -82,6 +88,9 @@ paths:
         address: "${cloud_run_url}/api/{path}"
       security:
         - api_key: []
+      responses:
+        '200':
+          description: OK
     delete:
       summary: Proxy DELETE API Endpoints
       operationId: proxy_delete_api
@@ -94,6 +103,9 @@ paths:
         address: "${cloud_run_url}/api/{path}"
       security:
         - api_key: []
+      responses:
+        '200':
+          description: OK
 
 securityDefinitions:
   api_key:
