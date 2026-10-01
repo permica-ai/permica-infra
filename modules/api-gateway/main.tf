@@ -31,6 +31,14 @@ resource "google_api_gateway_api" "api" {
   labels       = var.labels
 }
 
+# Enable API Gateway Managed Service on the project so API Keys can invoke it
+resource "google_project_service" "api_managed_service" {
+  project                    = var.project_id
+  service                    = google_api_gateway_api.api.managed_service
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
 # API Gateway Config (OpenAPI Spec)
 resource "google_api_gateway_api_config" "api_cfg" {
   provider             = google-beta
@@ -74,6 +82,11 @@ resource "google_api_gateway_gateway" "gateway" {
   labels       = var.labels
 }
 
+# Hourly rotation trigger for API Key
+resource "time_rotating" "api_key_rotation" {
+  rotation_hours = 1
+}
+
 # Provision API Key for API Gateway
 resource "google_apikeys_key" "api_key" {
   name         = "${var.api_name}-${var.environment}-key"
@@ -84,6 +97,12 @@ resource "google_apikeys_key" "api_key" {
     api_targets {
       service = google_api_gateway_api.api.managed_service
     }
+  }
+
+  lifecycle {
+    replace_triggered_by = [
+      time_rotating.api_key_rotation.rotation_rfc3339
+    ]
   }
 }
 
