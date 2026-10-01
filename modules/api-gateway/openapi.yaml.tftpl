@@ -44,7 +44,7 @@ paths:
         '200':
           description: OK
 
-  # Specific Health Check Endpoint (e.g. /health)
+  # Health Check Endpoint
   /health:
     get:
       summary: Healthcheck
@@ -55,151 +55,332 @@ paths:
         '200':
           description: OK
 
-  # Single segment /api/{path} (e.g. /api/health)
-  /api/{path}:
+  # Monitor Routes
+  /api/v1/monitor/runs:
     get:
-      summary: Proxy Single-Segment GET
-      operationId: proxy_get_api_single
-      parameters:
-        - name: path
-          in: path
-          required: true
-          type: string
+      summary: Get Ingestion Runs
+      operationId: get_monitor_runs
       x-google-backend:
-        address: "${cloud_run_url}/api/{path}"
-      security:
-        - api_key: []
-      responses:
-        '200':
-          description: OK
-    post:
-      summary: Proxy Single-Segment POST
-      operationId: proxy_post_api_single
-      parameters:
-        - name: path
-          in: path
-          required: true
-          type: string
-      x-google-backend:
-        address: "${cloud_run_url}/api/{path}"
+        address: "${cloud_run_url}/api/v1/monitor/runs"
       security:
         - api_key: []
       responses:
         '200':
           description: OK
 
-  # Multi-level nested API routes (e.g. /api/v1/monitor/status, /api/v1/signals)
-  /api/{p1}/{p2}:
+  /api/v1/monitor/runs/{run_id}:
     get:
-      summary: Proxy 2-Segment GET
-      operationId: proxy_get_api_2
+      summary: Get Ingestion Run Details
+      operationId: get_monitor_run_details
       parameters:
-        - name: p1
-          in: path
-          required: true
-          type: string
-        - name: p2
+        - name: run_id
           in: path
           required: true
           type: string
       x-google-backend:
-        address: "${cloud_run_url}/api/{p1}/{p2}"
-      security:
-        - api_key: []
-      responses:
-        '200':
-          description: OK
-    post:
-      summary: Proxy 2-Segment POST
-      operationId: proxy_post_api_2
-      parameters:
-        - name: p1
-          in: path
-          required: true
-          type: string
-        - name: p2
-          in: path
-          required: true
-          type: string
-      x-google-backend:
-        address: "${cloud_run_url}/api/{p1}/{p2}"
+        address: "${cloud_run_url}/api/v1/monitor/runs/{run_id}"
       security:
         - api_key: []
       responses:
         '200':
           description: OK
 
-  /api/{p1}/{p2}/{p3}:
+  /api/v1/monitor/status:
     get:
-      summary: Proxy 3-Segment GET
-      operationId: proxy_get_api_3
-      parameters:
-        - name: p1
-          in: path
-          required: true
-          type: string
-        - name: p2
-          in: path
-          required: true
-          type: string
-        - name: p3
-          in: path
-          required: true
-          type: string
+      summary: Get Monitor System Status
+      operationId: get_monitor_status
       x-google-backend:
-        address: "${cloud_run_url}/api/{p1}/{p2}/{p3}"
-      security:
-        - api_key: []
-      responses:
-        '200':
-          description: OK
-    post:
-      summary: Proxy 3-Segment POST
-      operationId: proxy_post_api_3
-      parameters:
-        - name: p1
-          in: path
-          required: true
-          type: string
-        - name: p2
-          in: path
-          required: true
-          type: string
-        - name: p3
-          in: path
-          required: true
-          type: string
-      x-google-backend:
-        address: "${cloud_run_url}/api/{p1}/{p2}/{p3}"
+        address: "${cloud_run_url}/api/v1/monitor/status"
       security:
         - api_key: []
       responses:
         '200':
           description: OK
 
-  /api/{p1}/{p2}/{p3}/{p4}:
+  /api/v1/monitor/runs/trigger:
+    post:
+      summary: Trigger Ingestion Run
+      operationId: trigger_monitor_run
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/monitor/runs/trigger"
+      security:
+        - api_key: []
+      responses:
+        '202':
+          description: Accepted
+
+  # Signals Routes
+  /api/v1/signals:
     get:
-      summary: Proxy 4-Segment GET
-      operationId: proxy_get_api_4
+      summary: Get Signals List
+      operationId: get_signals
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/signals"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/signals/summary:
+    get:
+      summary: Get Signals Summary
+      operationId: get_signals_summary
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/signals/summary"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/signals/detailed:
+    get:
+      summary: Get Signals Detailed
+      operationId: get_signals_detailed
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/signals/detailed"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/signals/detailed/count:
+    get:
+      summary: Get Signals Detailed Count
+      operationId: get_signals_detailed_count
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/signals/detailed/count"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/signals/{signal_id}:
+    get:
+      summary: Get Signal Details
+      operationId: get_signal_details
       parameters:
-        - name: p1
-          in: path
-          required: true
-          type: string
-        - name: p2
-          in: path
-          required: true
-          type: string
-        - name: p3
-          in: path
-          required: true
-          type: string
-        - name: p4
+        - name: signal_id
           in: path
           required: true
           type: string
       x-google-backend:
-        address: "${cloud_run_url}/api/{p1}/{p2}/{p3}/{p4}"
+        address: "${cloud_run_url}/api/v1/signals/{signal_id}"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  # Filters & Documents
+  /api/v1/filters/options:
+    get:
+      summary: Get Filter Options
+      operationId: get_filter_options
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/filters/options"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/documents/{doc_id}/pdf:
+    get:
+      summary: Get Document PDF
+      operationId: get_document_pdf
+      parameters:
+        - name: doc_id
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/documents/{doc_id}/pdf"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  # On-Demand Parse & Pipeline Routes
+  /api/v1/parse:
+    post:
+      summary: Parse On Demand
+      operationId: parse_on_demand
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/parse"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/download-annual:
+    post:
+      summary: Download Annual CFR
+      operationId: download_annual_cfr
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/download-annual"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/initiate-first-run:
+    post:
+      summary: Initiate First Run
+      operationId: initiate_first_run
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/initiate-first-run"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/first-run:
+    post:
+      summary: Initiate First Run Alternate
+      operationId: initiate_first_run_alt
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/first-run"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/first-run/status/{job_id}:
+    get:
+      summary: Get First Run Job Status
+      operationId: get_first_run_job_status
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/first-run/status/{job_id}"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/first-run/jobs:
+    get:
+      summary: List First Run Jobs
+      operationId: list_first_run_jobs
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/first-run/jobs"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/repairdb:
+    post:
+      summary: Repair Database
+      operationId: repair_database
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/repairdb"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/repair-db:
+    post:
+      summary: Repair Database Alternate
+      operationId: repair_database_alt
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/repair-db"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  # Graph & Diff Routes
+  /api/v1/graph/{title}:
+    get:
+      summary: Get Graph Network
+      operationId: get_graph_network
+      parameters:
+        - name: title
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/graph/{title}"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/layer/{title}/{part}/{version_date}:
+    get:
+      summary: Get Layer Diff
+      operationId: get_layer_diff
+      parameters:
+        - name: title
+          in: path
+          required: true
+          type: string
+        - name: part
+          in: path
+          required: true
+          type: string
+        - name: version_date
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/layer/{title}/{part}/{version_date}"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/diff/{title}/{part}/{version_date}:
+    get:
+      summary: Get Layer Diff Alternate
+      operationId: get_layer_diff_alt
+      parameters:
+        - name: title
+          in: path
+          required: true
+          type: string
+        - name: part
+          in: path
+          required: true
+          type: string
+        - name: version_date
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/diff/{title}/{part}/{version_date}"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/eventarc:
+    post:
+      summary: Handle Eventarc GCS Trigger
+      operationId: handle_eventarc_gcs_trigger
+      x-google-backend:
+        address: "${cloud_run_url}/api/v1/eventarc"
       security:
         - api_key: []
       responses:
