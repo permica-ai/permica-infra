@@ -44,11 +44,22 @@ paths:
         '200':
           description: OK
 
-  # API Endpoints Wildcard Proxy (Enforces Security Requirement)
+  # Specific Health Check Endpoint (e.g. /health)
+  /health:
+    get:
+      summary: Healthcheck
+      operationId: get_health
+      x-google-backend:
+        address: "${cloud_run_url}/health"
+      responses:
+        '200':
+          description: OK
+
+  # Single segment /api/{path} (e.g. /api/health)
   /api/{path}:
     get:
-      summary: Proxy GET API Endpoints
-      operationId: proxy_get_api
+      summary: Proxy Single-Segment GET
+      operationId: proxy_get_api_single
       parameters:
         - name: path
           in: path
@@ -62,8 +73,8 @@ paths:
         '200':
           description: OK
     post:
-      summary: Proxy POST API Endpoints
-      operationId: proxy_post_api
+      summary: Proxy Single-Segment POST
+      operationId: proxy_post_api_single
       parameters:
         - name: path
           in: path
@@ -76,31 +87,119 @@ paths:
       responses:
         '200':
           description: OK
-    put:
-      summary: Proxy PUT API Endpoints
-      operationId: proxy_put_api
+
+  # Multi-level nested API routes (e.g. /api/v1/monitor/status, /api/v1/signals)
+  /api/{p1}/{p2}:
+    get:
+      summary: Proxy 2-Segment GET
+      operationId: proxy_get_api_2
       parameters:
-        - name: path
+        - name: p1
+          in: path
+          required: true
+          type: string
+        - name: p2
           in: path
           required: true
           type: string
       x-google-backend:
-        address: "${cloud_run_url}/api/{path}"
+        address: "${cloud_run_url}/api/{p1}/{p2}"
       security:
         - api_key: []
       responses:
         '200':
           description: OK
-    delete:
-      summary: Proxy DELETE API Endpoints
-      operationId: proxy_delete_api
+    post:
+      summary: Proxy 2-Segment POST
+      operationId: proxy_post_api_2
       parameters:
-        - name: path
+        - name: p1
+          in: path
+          required: true
+          type: string
+        - name: p2
           in: path
           required: true
           type: string
       x-google-backend:
-        address: "${cloud_run_url}/api/{path}"
+        address: "${cloud_run_url}/api/{p1}/{p2}"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/{p1}/{p2}/{p3}:
+    get:
+      summary: Proxy 3-Segment GET
+      operationId: proxy_get_api_3
+      parameters:
+        - name: p1
+          in: path
+          required: true
+          type: string
+        - name: p2
+          in: path
+          required: true
+          type: string
+        - name: p3
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/{p1}/{p2}/{p3}"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Proxy 3-Segment POST
+      operationId: proxy_post_api_3
+      parameters:
+        - name: p1
+          in: path
+          required: true
+          type: string
+        - name: p2
+          in: path
+          required: true
+          type: string
+        - name: p3
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/{p1}/{p2}/{p3}"
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: OK
+
+  /api/{p1}/{p2}/{p3}/{p4}:
+    get:
+      summary: Proxy 4-Segment GET
+      operationId: proxy_get_api_4
+      parameters:
+        - name: p1
+          in: path
+          required: true
+          type: string
+        - name: p2
+          in: path
+          required: true
+          type: string
+        - name: p3
+          in: path
+          required: true
+          type: string
+        - name: p4
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/{p1}/{p2}/{p3}/{p4}"
       security:
         - api_key: []
       responses:
