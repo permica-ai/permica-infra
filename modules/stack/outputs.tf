@@ -24,6 +24,13 @@ output "api_gateway_url" {
   value       = (var.enable_api_gateway && var.enable_cloud_run) ? module.api_gateway[0].gateway_url : null
 }
 
+output "api_gateway_key" {
+  description = "The GCP API key for API Gateway"
+  value       = (var.enable_api_gateway && var.enable_cloud_run) ? module.api_gateway[0].api_key : null
+  sensitive   = true
+}
+
+
 output "app_deploy_github_variables" {
   description = "Set these as GitHub variables in the repo that builds/deploys the app (suffix with _DEV / _PROD)."
   value = {

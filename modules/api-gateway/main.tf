@@ -65,3 +65,17 @@ resource "google_api_gateway_gateway" "gateway" {
   display_name = "${var.api_name} Gateway (${var.environment})"
   labels       = var.labels
 }
+
+# Provision API Key for API Gateway
+resource "google_apikeys_key" "api_key" {
+  name         = "${var.api_name}-${var.environment}-key"
+  display_name = "${var.api_name} Gateway API Key (${var.environment})"
+  project      = var.project_id
+
+  restrictions {
+    api_targets {
+      service = google_api_gateway_api.api.managed_service
+    }
+  }
+}
+
