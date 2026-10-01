@@ -87,6 +87,12 @@ resource "google_service_account_iam_member" "deployer_act_as_runtime" {
   member             = "serviceAccount:${google_service_account.deployer.email}"
 }
 
+resource "google_service_account_iam_member" "deployer_act_as_deployer" {
+  service_account_id = google_service_account.deployer.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.deployer.email}"
+}
+
 data "google_project" "project" {
   project_id = var.project_id
 }
