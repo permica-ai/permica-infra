@@ -160,8 +160,10 @@ module "cloud_run" {
 
   env_vars = merge(
     {
-      ENVIRONMENT = var.environment
-      GCP_PROJECT = var.project_id
+      ENVIRONMENT         = var.environment
+      GCP_PROJECT         = var.project_id
+      GCP_PROJECT_ID      = var.project_id
+      BIGQUERY_PROJECT_ID = var.project_id
     },
     var.enable_cloud_sql ? {
       DB_INSTANCE_CONNECTION_NAME = module.cloud_sql[0].connection_name
