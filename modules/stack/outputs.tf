@@ -19,6 +19,11 @@ output "deployer_service_account" {
   value = module.iam.deployer_email
 }
 
+output "api_gateway_url" {
+  description = "The public URL host of the API Gateway proxy"
+  value       = (var.enable_api_gateway && var.enable_cloud_run) ? module.api_gateway[0].gateway_url : null
+}
+
 output "app_deploy_github_variables" {
   description = "Set these as GitHub variables in the repo that builds/deploys the app (suffix with _DEV / _PROD)."
   value = {
@@ -29,5 +34,7 @@ output "app_deploy_github_variables" {
     GCP_RUNTIME_SA    = module.iam.runtime_email
     ARTIFACT_REGISTRY = var.enable_artifact_registry ? "${var.region}-docker.pkg.dev/${var.project_id}/${module.artifact_registry[0].repository_id}" : ""
     CLOUD_RUN_SERVICE = var.enable_cloud_run ? module.cloud_run[0].name : ""
+    API_GATEWAY_URL   = (var.enable_api_gateway && var.enable_cloud_run) ? module.api_gateway[0].gateway_url : ""
   }
 }
+

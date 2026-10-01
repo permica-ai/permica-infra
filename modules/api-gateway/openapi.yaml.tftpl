@@ -1,0 +1,102 @@
+# Swagger OpenAPI 2.0 Spec for GCP API Gateway
+swagger: '2.0'
+info:
+  title: "${api_name}"
+  description: "API Gateway proxy for ${api_name} (${environment})"
+  version: "1.0.0"
+host: "${gateway_host}"
+schemes:
+  - https
+produces:
+  - application/json
+
+# Path Routing
+paths:
+  # Public Swagger UI & Documentation Endpoints (No Auth Required)
+  /docs:
+    get:
+      summary: Swagger UI Page
+      operationId: get_swagger_ui
+      x-google-backend:
+        address: "${cloud_run_url}/docs"
+      responses:
+        '200':
+          description: OK
+
+  /openapi.json:
+    get:
+      summary: Raw OpenAPI Spec
+      operationId: get_openapi_json
+      x-google-backend:
+        address: "${cloud_run_url}/openapi.json"
+      responses:
+        '200':
+          description: OK
+
+  # Root Healthcheck Endpoint
+  /:
+    get:
+      summary: Root Healthcheck
+      operationId: get_root
+      x-google-backend:
+        address: "${cloud_run_url}/"
+      responses:
+        '200':
+          description: OK
+
+  # API Endpoints Wildcard Proxy (Enforces Security Requirement)
+  /api/{path**}:
+    get:
+      summary: Proxy GET API Endpoints
+      operationId: proxy_get_api
+      parameters:
+        - name: path
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/{path}"
+      security:
+        - api_key: []
+    post:
+      summary: Proxy POST API Endpoints
+      operationId: proxy_post_api
+      parameters:
+        - name: path
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/{path}"
+      security:
+        - api_key: []
+    put:
+      summary: Proxy PUT API Endpoints
+      operationId: proxy_put_api
+      parameters:
+        - name: path
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/{path}"
+      security:
+        - api_key: []
+    delete:
+      summary: Proxy DELETE API Endpoints
+      operationId: proxy_delete_api
+      parameters:
+        - name: path
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: "${cloud_run_url}/api/{path}"
+      security:
+        - api_key: []
+
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: key
+    in: query
