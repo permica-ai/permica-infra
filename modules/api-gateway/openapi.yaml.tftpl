@@ -45,7 +45,7 @@ paths:
           description: OK
 
   # API Endpoints Wildcard Proxy (Enforces Security Requirement)
-  /api/{path**}:
+  /api/{path}:
     get:
       summary: Proxy GET API Endpoints
       operationId: proxy_get_api
