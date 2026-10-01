@@ -27,6 +27,8 @@ locals {
     "serviceusage.googleapis.com",
     "logging.googleapis.com",
     "bigquery.googleapis.com",
+    "apigateway.googleapis.com",
+    "servicemanagement.googleapis.com",
   ]
 }
 
@@ -190,3 +192,19 @@ module "scheduler" {
 
   depends_on = [module.apis]
 }
+
+module "api_gateway" {
+  count  = (var.enable_api_gateway && var.enable_cloud_run) ? 1 : 0
+  source = "../api-gateway"
+
+  project_id             = var.project_id
+  region                 = var.region
+  api_name               = var.app_name
+  environment            = var.environment
+  cloud_run_url          = module.cloud_run[0].uri
+  cloud_run_service_name = module.cloud_run[0].name
+  labels                 = local.labels
+
+  depends_on = [module.apis, module.cloud_run]
+}
+

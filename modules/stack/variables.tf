@@ -116,6 +116,13 @@ variable "enable_scheduler" {
   default     = true
 }
 
+variable "enable_api_gateway" {
+  description = "Enable GCP API Gateway proxy."
+  type        = bool
+  default     = true
+}
+
+
 variable "enable_secrets" {
   description = "Enable Secret Manager secrets provisioning."
   type        = bool
