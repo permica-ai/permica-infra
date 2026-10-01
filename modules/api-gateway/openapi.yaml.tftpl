@@ -10,11 +10,6 @@ schemes:
 produces:
   - application/json
 
-# Global Security Requirement for Swagger UI
-security:
-  - api_key_query: []
-  - api_key_header: []
-
 # Path Routing
 paths:
   # Public Swagger UI & Documentation Endpoints (No Auth Required)
@@ -22,6 +17,7 @@ paths:
     get:
       summary: Swagger UI Page
       operationId: get_swagger_ui
+      security: []
       x-google-backend:
         address: "${cloud_run_url}/docs"
       responses:
@@ -32,6 +28,7 @@ paths:
     get:
       summary: Raw OpenAPI Spec
       operationId: get_openapi_json
+      security: []
       x-google-backend:
         address: "${cloud_run_url}/openapi.json"
       responses:
@@ -43,6 +40,7 @@ paths:
     get:
       summary: Root Healthcheck
       operationId: get_root
+      security: []
       x-google-backend:
         address: "${cloud_run_url}/"
       responses:
@@ -54,6 +52,7 @@ paths:
     get:
       summary: Healthcheck
       operationId: get_health
+      security: []
       x-google-backend:
         address: "${cloud_run_url}/health"
       responses:
@@ -393,7 +392,7 @@ paths:
           description: OK
 
 securityDefinitions:
-  api_key_query:
+  api_key:
     type: apiKey
     name: key
     in: query
