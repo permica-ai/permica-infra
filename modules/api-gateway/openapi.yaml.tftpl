@@ -10,6 +10,11 @@ schemes:
 produces:
   - application/json
 
+# Global Security Requirement for Swagger UI
+security:
+  - api_key_query: []
+  - api_key_header: []
+
 # Path Routing
 paths:
   # Public Swagger UI & Documentation Endpoints (No Auth Required)
@@ -388,7 +393,11 @@ paths:
           description: OK
 
 securityDefinitions:
-  api_key:
+  api_key_query:
     type: apiKey
     name: key
     in: query
+  api_key_header:
+    type: apiKey
+    name: x-api-key
+    in: header
