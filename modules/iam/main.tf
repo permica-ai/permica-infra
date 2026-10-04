@@ -111,11 +111,12 @@ resource "google_service_account_iam_member" "deployer_act_as_compute" {
 }
 
 
-# GitHub OIDC -> deployer: only this repo and only the environment's deploy branch.
+# GitHub OIDC -> deployer: allow configured repositories in permica-ai organization.
 resource "google_service_account_iam_member" "deployer_wif" {
+  for_each           = toset(var.allowed_github_repos)
   service_account_id = google_service_account.deployer.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${var.wif_pool_name}/attribute.repository/${var.github_repo}"
+  member             = "principalSet://iam.googleapis.com/${var.wif_pool_name}/attribute.repository/${each.value}"
 }
 
 # ---- human access
