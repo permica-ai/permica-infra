@@ -3,7 +3,7 @@
 
 provider "registry.terraform.io/hashicorp/google" {
   version     = "7.46.1"
-  constraints = "~> 7.0"
+  constraints = ">= 5.0.0, ~> 7.0"
   hashes = [
     "h1:/ZUFL5n13Ltbg+M7921sWiRt6huh9B8xxCUGf7520mY=",
     "zh:2e0e513915988d80582f8db7ff18c6242b8f4fad977d428feb11bcbd30d8ba95",
@@ -63,7 +63,7 @@ provider "registry.terraform.io/hashicorp/random" {
 
 provider "registry.terraform.io/hashicorp/time" {
   version     = "0.14.2"
-  constraints = "~> 0.11"
+  constraints = ">= 0.9.0, ~> 0.11"
   hashes = [
     "h1:mwxQFMxGnM+Xm3F76yeHSAfPr3RZq/+XGT1vjgwiRWQ=",
     "zh:0aa1028d91041f4dceba193e3707dac57358d0063d97e20700e554758b67baca",

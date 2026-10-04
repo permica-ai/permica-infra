@@ -59,19 +59,37 @@ EOT
         CONN_NAME=$(terraform output -raw connection_name 2>/dev/null || true)
         if [ -n "$CONN_NAME" ] && [ "$CONN_NAME" != "null" ]; then
           echo "==> Found shared Cloud SQL connection: '$CONN_NAME'"
+          DEV_SECRET=$(terraform output -raw dev_db_password_secret_id 2>/dev/null || true)
+          PROD_SECRET=$(terraform output -raw prod_db_password_secret_id 2>/dev/null || true)
           for e in dev prod; do
             local tfvars="$REPO_ROOT/environments/$e/terraform.tfvars"
+            local secret_id=""
+            if [ "$e" = "dev" ]; then secret_id="$DEV_SECRET"; else secret_id="$PROD_SECRET"; fi
             if [ -f "$tfvars" ]; then
-              echo "==> Updating $tfvars with shared_cloud_sql_connection_name..."
+              echo "==> Updating $tfvars with shared_cloud_sql_connection_name & shared_db_password_secret_id..."
               sed -i '' "s|^\s*shared_cloud_sql_connection_name\s*=.*|shared_cloud_sql_connection_name = \"$CONN_NAME\"|" "$tfvars" 2>/dev/null || \
               sed -i "s|^\s*shared_cloud_sql_connection_name\s*=.*|shared_cloud_sql_connection_name = \"$CONN_NAME\"|" "$tfvars" 2>/dev/null || \
               echo "shared_cloud_sql_connection_name = \"$CONN_NAME\"" >> "$tfvars"
+
+              if [ -n "$secret_id" ] && [ "$secret_id" != "null" ]; then
+                sed -i '' "s|^\s*shared_db_password_secret_id\s*=.*|shared_db_password_secret_id = \"$secret_id\"|" "$tfvars" 2>/dev/null || \
+                sed -i "s|^\s*shared_db_password_secret_id\s*=.*|shared_db_password_secret_id = \"$secret_id\"|" "$tfvars" 2>/dev/null || \
+                echo "shared_db_password_secret_id = \"$secret_id\"" >> "$tfvars"
+              fi
             fi
           done
 
-          echo "==> Setting shared Cloud SQL GitHub variables on '${TARGET_REPO}'..."
-          gh variable set "GCP_SHARED_CLOUD_SQL_CONNECTION_NAME" --body "$CONN_NAME" --repo "$TARGET_REPO" 2>/dev/null || true
-          gh variable set "GCP_SHARED_DB_NAME" --body "permica-gis" --repo "$TARGET_REPO" 2>/dev/null || true
+          if terraform output -json app_deploy_github_variables > /dev/null 2>&1; then
+            echo "==> Setting shared Cloud SQL GitHub variables on '${TARGET_REPO}' from state..."
+            JSON_VARS=$(terraform output -json app_deploy_github_variables)
+            for key in $(echo "$JSON_VARS" | jq -r 'keys[]'); do
+              val=$(echo "$JSON_VARS" | jq -r --arg k "$key" '.[$k]')
+              if [ -n "$val" ] && [ "$val" != "null" ]; then
+                echo "Setting shared variable: ${key} on repo ${TARGET_REPO}"
+                gh variable set "$key" --body "$val" --repo "$TARGET_REPO"
+              fi
+            done
+          fi
         fi
       fi
       rm -rf "$shared_dir/.terraform" "$shared_dir/.terraform.lock.hcl"

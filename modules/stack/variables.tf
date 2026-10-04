@@ -110,6 +110,12 @@ variable "shared_db_user" {
   default     = ""
 }
 
+variable "shared_db_password_secret_id" {
+  description = "Secret Manager secret ID or resource path for shared database password."
+  type        = string
+  default     = ""
+}
+
 
 variable "enable_cloud_run" {
   description = "Enable Cloud Run service deployment."
