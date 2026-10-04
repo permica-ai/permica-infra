@@ -201,14 +201,15 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   }
 }
 
-# Apply: only this repo AND only the environment's deploy branch.
+# Apply: prod requires main branch; dev and shared allow any branch in this repo.
 resource "google_service_account_iam_member" "apply_wif" {
   for_each = local.envs
 
   service_account_id = google_service_account.apply[each.key].name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github[each.key].name}/attribute.repo_ref/${var.github_repo}@refs/heads/${each.value.deploy_branch}"
+  member             = each.key == "prod" ? "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github[each.key].name}/attribute.repo_ref/${var.github_repo}@refs/heads/${each.value.deploy_branch}" : "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github[each.key].name}/attribute.repository/${var.github_repo}"
 }
+
 
 # Plan (read-only): any ref in this repo, so pull requests can run plans.
 resource "google_service_account_iam_member" "plan_wif" {

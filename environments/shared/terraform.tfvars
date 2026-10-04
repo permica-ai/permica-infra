@@ -1,6 +1,7 @@
-project_id    = "permica-ai-shared-ebcee8" # matches bootstrap shared_project_id
+project_id    = "permica-ai-shared-331bb7" # matches bootstrap shared_project_id
 region        = "us-east1"
 app_name      = "permica-ai"
+
 database_name = "permica-gis"
 
 # Cost-optimized starting configuration (~$50/mo). Scale up anytime later without data loss.
