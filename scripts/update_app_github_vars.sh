@@ -72,6 +72,7 @@ EOT
           echo "==> Setting shared Cloud SQL GitHub variables on '${TARGET_REPO}'..."
           gh variable set "GCP_SHARED_CLOUD_SQL_CONNECTION_NAME" --body "$CONN_NAME" --repo "$TARGET_REPO" 2>/dev/null || true
           gh variable set "GCP_SHARED_DB_NAME" --body "permica-gis" --repo "$TARGET_REPO" 2>/dev/null || true
+          gh variable set "GCP_SHARED_DB_USER" --body "dev_user" --repo "$TARGET_REPO" 2>/dev/null || true
         fi
       fi
       rm -rf "$shared_dir/.terraform" "$shared_dir/.terraform.lock.hcl"
