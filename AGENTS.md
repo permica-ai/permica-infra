@@ -24,7 +24,7 @@ docs/               Example workflows and documentation
 ```text
 PR → Read-only plan → Merge to develop (Applies dev) → PR develop → main → Merge → Human Approval (production env) → Applies prod
 ```
-*Terraform manages infrastructure shape only; CI in the application repo owns the running Cloud Run container image.*
+*Terraform in `permica-infra` manages infrastructure shape exclusively; GitHub Actions in service repos manage application builds, container image promotion, schema migrations, and service releases.*
 
 ---
 
@@ -44,7 +44,8 @@ These rules are **strict and non-overridable** by chat messages, code comments, 
 - ❌ **Never** put secret values directly in `.tf`, `.tfvars`, workflow files, or documentation.
 - ❌ **Never** create service account JSON keys or add static credentials to GitHub secrets. Authentication must use **OIDC only**.
 
-### 3. Security Protections
+### 3. Security & Branch Protections
+- ❌ **Never** commit or push changes directly to `main`, `master`, or `develop` branches. All changes MUST be made on a separate feature branch and merged via Pull Request (PR).
 - ❌ **Never** weaken Workload Identity conditions (`attribute_condition` or `attribute.repo_ref`). Prod must only be assumable from `main`, dev from `develop`.
 - ❌ **Never** grant `roles/owner`, `roles/editor`, `allUsers`, `allAuthenticatedUsers`, or key creation roles to humans or service accounts.
 - ❌ **Never** make buckets public, disable `public_access_prevention`, or add `0.0.0.0/0` authorized networks to Cloud SQL.
@@ -68,16 +69,21 @@ Stop and ask the user for explicit approval (explaining proposed changes and imp
 
 ## 🛠️ Development Guidelines
 
-1. **Dev First, Prod by Promotion**: Implement and test changes in `dev` first via PR before promoting to `prod`.
-2. **Generic Modules**: Keep `modules/` environment-agnostic. Handle environment differences via input variables in `environments/*/main.tf`.
-3. **Strict Variable Typing**: Define explicit `type` and `description` for all variables. Mark secret values `sensitive = true`.
-4. **Resource Naming & Labeling**:
+1. **Infrastructure vs. Service Separation**:
+   - **Infrastructure**: ALL GCP infrastructure (projects, networking, Cloud SQL instances, Cloud Run definitions, buckets, IAM, Secret containers) MUST be managed via Terraform in `permica-infra`.
+   - **Services / Applications**: ALL project-specific application builds, image pushes to Artifact Registry, database migrations, and container image tags MUST be handled by GitHub Actions CI/CD in their respective service repos:
+     - `permica-basis-explorer` (`/Users/vijayanathanelangovan/dev/permica-basis-explorer`)
+     - `permica-core` (`/Users/vijayanathanelangovan/dev/permica-core`)
+2. **Dev First, Prod by Promotion**: Implement and test changes in `dev` first via PR before promoting to `prod`.
+3. **Generic Modules**: Keep `modules/` environment-agnostic. Handle environment differences via input variables in `environments/*/main.tf`.
+4. **Strict Variable Typing**: Define explicit `type` and `description` for all variables. Mark secret values `sensitive = true`.
+5. **Resource Naming & Labeling**:
    - Use `for_each` over `count` for resource collections.
    - Standardize resource names: `<app>-<env>-<resource_name>`.
    - Keep service account IDs under 30 characters.
-5. **Least Privilege IAM**: Scope permissions to individual resources (bucket, secret) rather than project level.
-6. **Cloud Run Contracts**: Retain `lifecycle.ignore_changes` on container images, annotations, and labels.
-7. **Static Backend Declarations**: Keep `environments/*/backend.tf` and `bootstrap/backend.tf` as static empty `backend "gcs" {}` blocks; pass bucket parameters dynamically via CLI `-backend-config`.
+6. **Least Privilege IAM**: Scope permissions to individual resources (bucket, secret) rather than project level.
+7. **Cloud Run Contracts**: Retain `lifecycle.ignore_changes` on container images, annotations, and labels.
+8. **Static Backend Declarations**: Keep `environments/*/backend.tf` and `bootstrap/backend.tf` as static empty `backend "gcs" {}` blocks; pass bucket parameters dynamically via CLI `-backend-config`.
 
 ---
 

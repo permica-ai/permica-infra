@@ -11,7 +11,13 @@ locals {
     managed_by  = "terraform"
   }
 
+  has_cloud_sql       = var.enable_cloud_sql || var.external_cloud_sql_connection_name != ""
+  sql_connection_name = var.enable_cloud_sql ? module.cloud_sql[0].connection_name : var.external_cloud_sql_connection_name
+  sql_db_name         = var.enable_cloud_sql ? module.cloud_sql[0].database_name : var.shared_db_name
+  sql_user_name       = var.enable_cloud_sql ? module.cloud_sql[0].user_name : (var.shared_db_user != "" ? var.shared_db_user : "app")
+
   services = [
+
     "run.googleapis.com",
     "sqladmin.googleapis.com",
     "storage.googleapis.com",
@@ -155,8 +161,8 @@ module "cloud_run" {
   deletion_protection   = var.deletion_protection
   labels                = local.labels
 
-  enable_cloud_sql          = var.enable_cloud_sql
-  cloud_sql_connection_name = var.enable_cloud_sql ? module.cloud_sql[0].connection_name : ""
+  enable_cloud_sql          = local.has_cloud_sql
+  cloud_sql_connection_name = local.sql_connection_name
 
   env_vars = merge(
     {
@@ -165,20 +171,21 @@ module "cloud_run" {
       GCP_PROJECT_ID      = var.project_id
       BIGQUERY_PROJECT_ID = var.project_id
     },
-    var.enable_cloud_sql ? {
-      DB_INSTANCE_CONNECTION_NAME = module.cloud_sql[0].connection_name
+    local.has_cloud_sql ? {
+      DB_INSTANCE_CONNECTION_NAME = local.sql_connection_name
       DB_SOCKET_DIR               = "/cloudsql"
-      DB_NAME                     = module.cloud_sql[0].database_name
-      DB_USER                     = module.cloud_sql[0].user_name
+      DB_NAME                     = local.sql_db_name
+      DB_USER                     = local.sql_user_name
     } : {},
     var.enable_storage ? { STORAGE_BUCKET = module.storage[0].name } : {},
     var.enable_bigtable ? { BIGTABLE_INSTANCE_ID = module.bigtable[0].instance_name } : {},
   )
 
   secret_env = merge(
-    (var.enable_secrets && var.enable_cloud_sql) ? { DB_PASSWORD = module.secrets[0].db_password_secret_id } : {},
+    (var.enable_secrets && local.has_cloud_sql) ? { DB_PASSWORD = module.secrets[0].db_password_secret_id } : {},
     var.extra_secret_env,
   )
+
 
   depends_on = [module.secrets, module.iam]
 }

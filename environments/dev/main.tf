@@ -17,17 +17,21 @@ module "stack" {
   min_instances         = 0
   max_instances         = 3
 
-  enable_cloud_sql         = var.enable_cloud_sql
-  enable_cloud_run         = var.enable_cloud_run
-  enable_storage           = var.enable_storage
-  enable_artifact_registry = var.enable_artifact_registry
-  enable_scheduler         = var.enable_scheduler
-  enable_secrets           = var.enable_secrets
-  enable_bigtable          = var.enable_bigtable
-  bigtable_tables          = var.bigtable_tables
-  scheduler_jobs           = var.scheduler_jobs
-  extra_secret_env         = var.extra_secret_env
-  allow_public_access      = var.allow_public_access
+  enable_cloud_sql                   = var.enable_cloud_sql
+  external_cloud_sql_connection_name = var.shared_cloud_sql_connection_name
+  shared_db_name                     = "permica-gis"
+  shared_db_user                     = "dev_user"
+  enable_cloud_run                   = var.enable_cloud_run
+  enable_storage                     = var.enable_storage
+  enable_artifact_registry           = var.enable_artifact_registry
+  enable_scheduler                   = var.enable_scheduler
+  enable_secrets                     = var.enable_secrets
+  enable_bigtable                    = var.enable_bigtable
+  bigtable_tables                    = var.bigtable_tables
+  scheduler_jobs                     = var.scheduler_jobs
+  extra_secret_env                   = var.extra_secret_env
+  allow_public_access                = var.allow_public_access
+
 
   # Developers can deploy, read logs and add secret values in dev.
   developer_members = var.developer_members

@@ -92,6 +92,25 @@ variable "enable_cloud_sql" {
   default     = true
 }
 
+variable "external_cloud_sql_connection_name" {
+  description = "Shared or external Cloud SQL instance connection name (e.g., project:region:instance) when enable_cloud_sql is false."
+  type        = string
+  default     = ""
+}
+
+variable "shared_db_name" {
+  description = "Database name when using a shared Cloud SQL instance."
+  type        = string
+  default     = "permica-gis"
+}
+
+variable "shared_db_user" {
+  description = "Database user for this environment when using a shared Cloud SQL instance (e.g. dev_user, prod_user)."
+  type        = string
+  default     = ""
+}
+
+
 variable "enable_cloud_run" {
   description = "Enable Cloud Run service deployment."
   type        = bool
