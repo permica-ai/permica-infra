@@ -19,12 +19,12 @@ output "prod_user" {
 }
 
 output "dev_db_password_secret_id" {
-  value       = google_secret_manager_secret.dev_db_password.id
+  value       = google_secret_manager_secret.dev_db_password.name
   description = "Secret Manager secret resource path for dev DB password."
 }
 
 output "prod_db_password_secret_id" {
-  value       = google_secret_manager_secret.prod_db_password.id
+  value       = google_secret_manager_secret.prod_db_password.name
   description = "Secret Manager secret resource path for prod DB password."
 }
 
@@ -34,8 +34,8 @@ output "app_deploy_github_variables" {
     GCP_SHARED_CLOUD_SQL_CONNECTION_NAME = module.cloud_sql.connection_name
     GCP_SHARED_DB_NAME                   = module.cloud_sql.database_name
     GCP_SHARED_DB_USER                   = module.cloud_sql.user_name
-    GCP_SHARED_DB_PASSWORD_SECRET_DEV    = google_secret_manager_secret.dev_db_password.id
-    GCP_SHARED_DB_PASSWORD_SECRET_PROD   = google_secret_manager_secret.prod_db_password.id
+    GCP_SHARED_DB_PASSWORD_SECRET_DEV    = google_secret_manager_secret.dev_db_password.name
+    GCP_SHARED_DB_PASSWORD_SECRET_PROD   = google_secret_manager_secret.prod_db_password.name
   }
 }
 
