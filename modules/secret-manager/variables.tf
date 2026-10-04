@@ -18,7 +18,14 @@ variable "db_password" {
   sensitive = true
 }
 
+variable "create_db_password_version" {
+  description = "Whether to create a secret version for db_password. Must be a boolean known at plan time."
+  type        = bool
+  default     = true
+}
+
 variable "labels" {
   type    = map(string)
   default = {}
 }
+
