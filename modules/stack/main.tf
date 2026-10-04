@@ -139,11 +139,12 @@ module "secrets" {
   count  = var.enable_secrets ? 1 : 0
   source = "../secret-manager"
 
-  project_id      = var.project_id
-  secret_ids      = var.app_secrets
-  accessor_member = "serviceAccount:${module.iam.runtime_email}"
-  db_password     = var.enable_cloud_sql ? module.cloud_sql[0].password : ""
-  labels          = local.labels
+  project_id                 = var.project_id
+  secret_ids                 = var.app_secrets
+  accessor_member            = "serviceAccount:${module.iam.runtime_email}"
+  db_password                = var.enable_cloud_sql ? module.cloud_sql[0].password : ""
+  create_db_password_version = var.enable_cloud_sql
+  labels                     = local.labels
 
   depends_on = [module.apis]
 }

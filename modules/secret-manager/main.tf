@@ -34,7 +34,7 @@ resource "google_secret_manager_secret" "db_password" {
 }
 
 resource "google_secret_manager_secret_version" "db_password" {
-  count       = var.db_password != "" ? 1 : 0
+  count       = var.create_db_password_version ? 1 : 0
   secret      = google_secret_manager_secret.db_password.id
   secret_data = var.db_password
 }
