@@ -191,6 +191,9 @@ module "cloud_run" {
 
   secret_env = merge(
     (var.enable_secrets && local.has_cloud_sql) ? { DB_PASSWORD = module.secrets[0].db_password_secret_id } : {},
+    var.external_cloud_sql_connection_name != "" ? {
+      SHARED_GIS_DB_PASSWORD = "projects/permica-ai-shared-331bb7/secrets/${var.environment == "prod" ? "prod-db-password" : "dev-db-password"}"
+    } : {},
     var.extra_secret_env,
   )
 
