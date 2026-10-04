@@ -10,6 +10,7 @@ locals {
 
   services = [
     "sqladmin.googleapis.com",
+    "sql-component.googleapis.com",
     "secretmanager.googleapis.com",
     "iam.googleapis.com",
     "serviceusage.googleapis.com",
