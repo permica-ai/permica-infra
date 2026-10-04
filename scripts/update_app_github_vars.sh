@@ -69,10 +69,17 @@ EOT
             fi
           done
 
-          echo "==> Setting shared Cloud SQL GitHub variables on '${TARGET_REPO}'..."
-          gh variable set "GCP_SHARED_CLOUD_SQL_CONNECTION_NAME" --body "$CONN_NAME" --repo "$TARGET_REPO" 2>/dev/null || true
-          gh variable set "GCP_SHARED_DB_NAME" --body "permica-gis" --repo "$TARGET_REPO" 2>/dev/null || true
-          gh variable set "GCP_SHARED_DB_USER" --body "dev_user" --repo "$TARGET_REPO" 2>/dev/null || true
+          if terraform output -json app_deploy_github_variables > /dev/null 2>&1; then
+            echo "==> Setting shared Cloud SQL GitHub variables on '${TARGET_REPO}' from state..."
+            JSON_VARS=$(terraform output -json app_deploy_github_variables)
+            for key in $(echo "$JSON_VARS" | jq -r 'keys[]'); do
+              val=$(echo "$JSON_VARS" | jq -r --arg k "$key" '.[$k]')
+              if [ -n "$val" ] && [ "$val" != "null" ]; then
+                echo "Setting shared variable: ${key} on repo ${TARGET_REPO}"
+                gh variable set "$key" --body "$val" --repo "$TARGET_REPO"
+              fi
+            done
+          fi
         fi
       fi
       rm -rf "$shared_dir/.terraform" "$shared_dir/.terraform.lock.hcl"
