@@ -17,7 +17,7 @@ module "stack" {
   min_instances         = 0
   max_instances         = 3
 
-  enable_cloud_sql                   = var.enable_cloud_sql
+  enable_cloud_sql                   = true
   external_cloud_sql_connection_name = var.shared_cloud_sql_connection_name
   shared_db_name                     = "permica-gis"
   shared_db_user                     = "dev_user"
