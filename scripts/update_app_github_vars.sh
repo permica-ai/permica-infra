@@ -124,9 +124,14 @@ EOT
     fi
 
     echo "==> Setting GitHub repository variables on '${TARGET_REPO}' for environment suffix '_${env_upper}'..."
-    terraform output -json app_deploy_github_variables | jq -r --arg env "_${env_upper}" 'to_entries[] | "\(.key)\($env)=\(.value)"' | while IFS='=' read -r key val; do
-      echo "Setting variable: ${key} on repo ${TARGET_REPO}"
-      gh variable set "$key" --body "$val" --repo "$TARGET_REPO"
+    JSON_VARS=$(terraform output -json app_deploy_github_variables)
+    for key in $(echo "$JSON_VARS" | jq -r 'keys[]'); do
+      val=$(echo "$JSON_VARS" | jq -r --arg k "$key" '.[$k]')
+      if [ -n "$val" ] && [ "$val" != "null" ]; then
+        target_key="${key}_${env_upper}"
+        echo "Setting variable: ${target_key} on repo ${TARGET_REPO}"
+        gh variable set "$target_key" --body "$val" --repo "$TARGET_REPO"
+      fi
     done
 
     # Clean up local workspace artifacts after reading outputs
