@@ -33,9 +33,11 @@ resource "random_id" "project_suffix" {
 
 locals {
   envs = {
-    dev  = { project_id = coalesce(var.dev_project_id, "${var.app_name}-dev-${random_id.project_suffix.hex}"), deploy_branch = var.dev_branch }
-    prod = { project_id = coalesce(var.prod_project_id, "${var.app_name}-prod-${random_id.project_suffix.hex}"), deploy_branch = var.prod_branch }
+    dev    = { project_id = coalesce(var.dev_project_id, "${var.app_name}-dev-${random_id.project_suffix.hex}"), deploy_branch = var.dev_branch }
+    prod   = { project_id = coalesce(var.prod_project_id, "${var.app_name}-prod-${random_id.project_suffix.hex}"), deploy_branch = var.prod_branch }
+    shared = { project_id = coalesce(var.shared_project_id, "${var.app_name}-shared-${random_id.project_suffix.hex}"), deploy_branch = var.prod_branch }
   }
+
 
   bootstrap_apis = [
     "cloudresourcemanager.googleapis.com",

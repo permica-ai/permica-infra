@@ -29,10 +29,17 @@ variable "admin_members" {
 }
 
 variable "enable_cloud_sql" {
-  description = "Enable PostgreSQL (Cloud SQL) database."
+  description = "Enable local PostgreSQL (Cloud SQL) database instance."
   type        = bool
-  default     = true
+  default     = false
 }
+
+variable "shared_cloud_sql_connection_name" {
+  description = "Connection name of shared Cloud SQL instance in permica-ai-shared (e.g., project:region:instance)."
+  type        = string
+  default     = ""
+}
+
 
 variable "enable_cloud_run" {
   description = "Enable Cloud Run service."

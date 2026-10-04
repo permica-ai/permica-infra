@@ -34,14 +34,23 @@ resource "google_sql_database_instance" "this" {
       start_time                     = "03:00"
     }
 
-    # PostGIS extension is available out of the box in Cloud SQL PostgreSQL.
-    # Flags can be configured here if required.
+    # PostGIS extension & memory optimization flags
+    dynamic "database_flags" {
+      for_each = var.database_flags
+
+      content {
+        name  = database_flags.value.name
+        value = database_flags.value.value
+      }
+    }
+
     ip_configuration {
       ipv4_enabled = true
       ssl_mode     = "ENCRYPTED_ONLY"
     }
   }
 }
+
 
 resource "google_sql_database" "app" {
   project  = var.project_id
@@ -55,3 +64,18 @@ resource "google_sql_user" "app" {
   name     = var.user_name
   password = random_password.db.result
 }
+
+resource "random_password" "additional_users" {
+  for_each = toset(var.additional_users)
+  length   = 32
+  special  = false
+}
+
+resource "google_sql_user" "additional_users" {
+  for_each = toset(var.additional_users)
+  project  = var.project_id
+  instance = google_sql_database_instance.this.name
+  name     = each.key
+  password = random_password.additional_users[each.key].result
+}
+

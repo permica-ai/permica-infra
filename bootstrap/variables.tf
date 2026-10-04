@@ -32,6 +32,13 @@ variable "prod_project_id" {
   default     = null
 }
 
+variable "shared_project_id" {
+  description = "Globally unique project ID for shared infra, e.g. myapp-shared-123456. Leave null to auto-generate."
+  type        = string
+  default     = null
+}
+
+
 variable "region" {
   type    = string
   default = "us-east1"

@@ -49,3 +49,25 @@ variable "labels" {
   type    = map(string)
   default = {}
 }
+
+variable "additional_users" {
+  description = "List of additional database user names to create on this Cloud SQL instance."
+  type        = list(string)
+  default     = []
+}
+
+variable "database_flags" {
+  description = "List of database flags to optimize PostgreSQL for PostGIS spatial workloads."
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = [
+    { name = "random_page_cost", value = "1.1" },
+    { name = "work_mem", value = "51200" },
+    { name = "maintenance_work_mem", value = "1048576" },
+    { name = "max_parallel_workers_per_gather", value = "2" }
+  ]
+}
+
+

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Helper script to set GitHub Actions repository variables for application repositories (e.g., permica-core).
+# Helper script to set GitHub Actions repository variables for application repositories (e.g., permica-core, permica-basis-explorer).
 # Usage: ./scripts/update_app_github_vars.sh <target-repo> [env]
+# Example: ./scripts/update_app_github_vars.sh permica-ai/permica-core dev
 
 if [ "$#" -lt 1 ]; then
   echo "Usage: $0 <target-repo> [env: dev|prod]" >&2
@@ -23,11 +24,62 @@ fi
 # Clean up stale local terraform cache and lock files across environments before reading outputs
 clean_local_cache() {
   echo "==> Cleaning local Terraform cache & lock files..."
+  rm -rf "$REPO_ROOT/environments/shared/.terraform" "$REPO_ROOT/environments/shared/.terraform.lock.hcl" 2>/dev/null || true
   rm -rf "$REPO_ROOT/environments/dev/.terraform" "$REPO_ROOT/environments/dev/.terraform.lock.hcl" 2>/dev/null || true
   rm -rf "$REPO_ROOT/environments/prod/.terraform" "$REPO_ROOT/environments/prod/.terraform.lock.hcl" 2>/dev/null || true
 }
 
 clean_local_cache
+
+# Fetch and sync shared Cloud SQL connection parameters if shared environment is provisioned
+sync_shared_cloud_sql() {
+  local shared_dir="$REPO_ROOT/environments/shared"
+  if [ ! -d "$shared_dir" ]; then
+    return 0
+  fi
+
+  INFRA_REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "permica-ai/permica-infra")"
+  SHARED_PROJ_ID="$(gh variable get "GCP_PROJECT_ID_SHARED" --repo "$INFRA_REPO" 2>/dev/null || true)"
+  if [ -z "$SHARED_PROJ_ID" ]; then
+    SHARED_PROJ_ID=$(grep -E '^\s*project_id\s*=' "$shared_dir/terraform.tfvars" 2>/dev/null | cut -d'=' -f2 | tr -d ' "' || true)
+  fi
+
+  if [ -n "$SHARED_PROJ_ID" ]; then
+    STATE_BUCKET="${SHARED_PROJ_ID}-tfstate"
+    echo "==> Checking shared Cloud SQL outputs from '$SHARED_PROJ_ID'..."
+    (
+      cd "$shared_dir"
+      cat <<EOT > "$shared_dir/backend.tf"
+terraform {
+  backend "gcs" {}
+}
+EOT
+      rm -rf "$shared_dir/.terraform" "$shared_dir/.terraform.lock.hcl"
+      if terraform init -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > /dev/null 2>&1; then
+        CONN_NAME=$(terraform output -raw connection_name 2>/dev/null || true)
+        if [ -n "$CONN_NAME" ] && [ "$CONN_NAME" != "null" ]; then
+          echo "==> Found shared Cloud SQL connection: '$CONN_NAME'"
+          for e in dev prod; do
+            local tfvars="$REPO_ROOT/environments/$e/terraform.tfvars"
+            if [ -f "$tfvars" ]; then
+              echo "==> Updating $tfvars with shared_cloud_sql_connection_name..."
+              sed -i '' "s|^\s*shared_cloud_sql_connection_name\s*=.*|shared_cloud_sql_connection_name = \"$CONN_NAME\"|" "$tfvars" 2>/dev/null || \
+              sed -i "s|^\s*shared_cloud_sql_connection_name\s*=.*|shared_cloud_sql_connection_name = \"$CONN_NAME\"|" "$tfvars" 2>/dev/null || \
+              echo "shared_cloud_sql_connection_name = \"$CONN_NAME\"" >> "$tfvars"
+            fi
+          done
+
+          echo "==> Setting shared Cloud SQL GitHub variables on '${TARGET_REPO}'..."
+          gh variable set "GCP_SHARED_CLOUD_SQL_CONNECTION_NAME" --body "$CONN_NAME" --repo "$TARGET_REPO" 2>/dev/null || true
+          gh variable set "GCP_SHARED_DB_NAME" --body "permica-gis" --repo "$TARGET_REPO" 2>/dev/null || true
+        fi
+      fi
+      rm -rf "$shared_dir/.terraform" "$shared_dir/.terraform.lock.hcl"
+    )
+  fi
+}
+
+sync_shared_cloud_sql
 
 set_var_for_env() {
   local env_name="$1"
@@ -43,7 +95,6 @@ set_var_for_env() {
   (
     cd "$env_dir"
 
-    # Fetch project ID from GitHub repo variables first, falling back to local terraform.tfvars
     INFRA_REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "permica-ai/permica-infra")"
     PROJ_ID="$(gh variable get "GCP_PROJECT_ID_${env_upper}" --repo "$INFRA_REPO" 2>/dev/null || true)"
     if [ -z "$PROJ_ID" ]; then
