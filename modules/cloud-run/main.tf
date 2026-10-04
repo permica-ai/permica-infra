@@ -21,7 +21,7 @@ resource "google_cloud_run_v2_service" "this" {
         name = "cloudsql"
 
         cloud_sql_instance {
-          instances = [var.cloud_sql_connection_name]
+          instances = length(var.cloud_sql_connection_names) > 0 ? var.cloud_sql_connection_names : [var.cloud_sql_connection_name]
         }
       }
     }

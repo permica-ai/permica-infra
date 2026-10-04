@@ -66,6 +66,13 @@ variable "cloud_sql_connection_name" {
   default = ""
 }
 
+variable "cloud_sql_connection_names" {
+  description = "List of Cloud SQL instance connection names to mount under /cloudsql."
+  type        = list(string)
+  default     = []
+}
+
+
 variable "allow_public_access" {
   description = "Allow unauthenticated invocations (the app must do its own auth)."
   type        = bool
