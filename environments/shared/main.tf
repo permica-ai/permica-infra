@@ -43,24 +43,27 @@ module "cloud_sql" {
 
 # Cross-project IAM: Grant dev & prod runtime service accounts roles/cloudsql.client
 resource "google_project_iam_member" "dev_cloudsql_client" {
-  count   = var.dev_service_account_email != "" ? 1 : 0
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${var.dev_service_account_email}"
+  count      = var.dev_service_account_email != "" ? 1 : 0
+  project    = var.project_id
+  role       = "roles/cloudsql.client"
+  member     = "serviceAccount:${var.dev_service_account_email}"
+  depends_on = [module.apis]
 }
 
 resource "google_project_iam_member" "prod_cloudsql_client" {
-  count   = var.prod_service_account_email != "" ? 1 : 0
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${var.prod_service_account_email}"
+  count      = var.prod_service_account_email != "" ? 1 : 0
+  project    = var.project_id
+  role       = "roles/cloudsql.client"
+  member     = "serviceAccount:${var.prod_service_account_email}"
+  depends_on = [module.apis]
 }
 
 # Store database passwords in Secret Manager in shared project
 resource "google_secret_manager_secret" "dev_db_password" {
-  project   = var.project_id
-  secret_id = "dev-db-password"
-  labels    = local.labels
+  project    = var.project_id
+  secret_id  = "dev-db-password"
+  labels     = local.labels
+  depends_on = [module.apis]
 
   replication {
     auto {}
@@ -73,9 +76,10 @@ resource "google_secret_manager_secret_version" "dev_db_password" {
 }
 
 resource "google_secret_manager_secret" "prod_db_password" {
-  project   = var.project_id
-  secret_id = "prod-db-password"
-  labels    = local.labels
+  project    = var.project_id
+  secret_id  = "prod-db-password"
+  labels     = local.labels
+  depends_on = [module.apis]
 
   replication {
     auto {}
@@ -86,3 +90,4 @@ resource "google_secret_manager_secret_version" "prod_db_password" {
   secret      = google_secret_manager_secret.prod_db_password.id
   secret_data = module.cloud_sql.user_passwords["prod_user"]
 }
+
