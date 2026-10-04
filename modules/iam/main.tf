@@ -62,6 +62,12 @@ resource "google_project_iam_member" "runtime_bigquery_dataeditor" {
   member  = "serviceAccount:${google_service_account.runtime.email}"
 }
 
+resource "google_project_iam_member" "runtime_secretmanager" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.runtime.email}"
+}
+
 # ---- deployer permissions
 resource "google_project_iam_member" "deployer_run" {
   project = var.project_id
