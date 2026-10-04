@@ -31,7 +31,7 @@ variable "admin_members" {
 variable "enable_cloud_sql" {
   description = "Enable local PostgreSQL (Cloud SQL) database instance."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "shared_cloud_sql_connection_name" {
