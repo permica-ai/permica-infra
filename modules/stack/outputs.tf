@@ -38,6 +38,7 @@ output "app_deploy_github_variables" {
     GCP_PROJECT_ID                 = var.project_id
     GCP_WIF_PROVIDER               = "${data.google_iam_workload_identity_pool.github.name}/providers/github"
     GCP_DEPLOYER_SA                = module.iam.deployer_email
+    GCP_WIF_SERVICE_ACCOUNT        = module.iam.deployer_email
     GCP_RUNTIME_SA                 = module.iam.runtime_email
     ARTIFACT_REGISTRY              = var.enable_artifact_registry ? "${var.region}-docker.pkg.dev/${var.project_id}/${module.artifact_registry[0].repository_id}" : ""
     CLOUD_RUN_SERVICE              = var.enable_cloud_run ? module.cloud_run[0].name : ""

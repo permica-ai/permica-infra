@@ -21,6 +21,7 @@ module "stack" {
   external_cloud_sql_connection_name = var.shared_cloud_sql_connection_name
   shared_db_name                     = "permica-gis"
   shared_db_user                     = "dev_user"
+  shared_db_password_secret_id       = var.shared_db_password_secret_id
   enable_cloud_run                   = var.enable_cloud_run
   enable_storage                     = var.enable_storage
   enable_artifact_registry           = var.enable_artifact_registry

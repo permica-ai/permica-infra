@@ -40,6 +40,12 @@ variable "shared_cloud_sql_connection_name" {
   default     = ""
 }
 
+variable "shared_db_password_secret_id" {
+  description = "Secret Manager secret resource ID for shared Cloud SQL password."
+  type        = string
+  default     = ""
+}
+
 
 variable "enable_cloud_run" {
   description = "Enable Cloud Run service."
