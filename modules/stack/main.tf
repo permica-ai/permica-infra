@@ -13,8 +13,12 @@ locals {
 
   has_cloud_sql       = var.enable_cloud_sql || var.external_cloud_sql_connection_name != ""
   sql_connection_name = var.enable_cloud_sql ? module.cloud_sql[0].connection_name : var.external_cloud_sql_connection_name
-  sql_db_name         = var.enable_cloud_sql ? module.cloud_sql[0].database_name : var.shared_db_name
-  sql_user_name       = var.enable_cloud_sql ? module.cloud_sql[0].user_name : (var.shared_db_user != "" ? var.shared_db_user : "app")
+  sql_connection_names = compact([
+    var.enable_cloud_sql ? module.cloud_sql[0].connection_name : "",
+    var.external_cloud_sql_connection_name
+  ])
+  sql_db_name   = var.enable_cloud_sql ? module.cloud_sql[0].database_name : var.shared_db_name
+  sql_user_name = var.enable_cloud_sql ? module.cloud_sql[0].user_name : (var.shared_db_user != "" ? var.shared_db_user : "app")
 
   services = [
 
@@ -161,8 +165,9 @@ module "cloud_run" {
   deletion_protection   = var.deletion_protection
   labels                = local.labels
 
-  enable_cloud_sql          = local.has_cloud_sql
-  cloud_sql_connection_name = local.sql_connection_name
+  enable_cloud_sql           = local.has_cloud_sql
+  cloud_sql_connection_name  = local.sql_connection_name
+  cloud_sql_connection_names = local.sql_connection_names
 
   env_vars = merge(
     {
@@ -176,6 +181,9 @@ module "cloud_run" {
       DB_SOCKET_DIR               = "/cloudsql"
       DB_NAME                     = local.sql_db_name
       DB_USER                     = local.sql_user_name
+    } : {},
+    var.external_cloud_sql_connection_name != "" ? {
+      SPATIAL_BACKEND_DSN_SHARED_GIS = "postgresql://${var.shared_db_user != "" ? var.shared_db_user : "dev_user"}@/${var.shared_db_name != "" ? var.shared_db_name : "permica-gis"}?host=/cloudsql/${var.external_cloud_sql_connection_name}"
     } : {},
     var.enable_storage ? { STORAGE_BUCKET = module.storage[0].name } : {},
     var.enable_bigtable ? { BIGTABLE_INSTANCE_ID = module.bigtable[0].instance_name } : {},
