@@ -182,6 +182,7 @@ module "cloud_run" {
       DB_SOCKET_DIR               = "/cloudsql"
       DB_NAME                     = local.sql_db_name
       DB_USER                     = local.sql_user_name
+      DATABASE_URL                = "postgresql://${local.sql_user_name}@/${local.sql_db_name}?host=/cloudsql/${local.sql_connection_name}"
     } : {},
     var.external_cloud_sql_connection_name != "" ? {
       SPATIAL_BACKEND_DSN_SHARED_GIS = "postgresql://${var.shared_db_user != "" ? var.shared_db_user : "dev_user"}@/${var.shared_db_name != "" ? var.shared_db_name : "permica-gis"}?host=/cloudsql/${var.external_cloud_sql_connection_name}"
