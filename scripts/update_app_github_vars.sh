@@ -54,8 +54,8 @@ terraform {
   backend "gcs" {}
 }
 EOT
-      rm -rf "$shared_dir/.terraform" "$shared_dir/.terraform.lock.hcl"
-      if terraform init -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > /dev/null 2>&1; then
+      INIT_ERR=$(mktemp)
+      if terraform init -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > "$INIT_ERR" 2>&1; then
         CONN_NAME=$(terraform output -raw connection_name 2>/dev/null || true)
         if [ -n "$CONN_NAME" ] && [ "$CONN_NAME" != "null" ]; then
           echo "==> Found shared Cloud SQL connection: '$CONN_NAME'"
@@ -91,7 +91,10 @@ EOT
             done
           fi
         fi
+      else
+        echo "==> Warning: Could not initialize shared state bucket '$STATE_BUCKET'. Skipping shared outputs." >&2
       fi
+      rm -f "$INIT_ERR"
       rm -rf "$shared_dir/.terraform" "$shared_dir/.terraform.lock.hcl"
     )
   fi
@@ -132,7 +135,15 @@ terraform {
 }
 EOT
     rm -rf "$env_dir/.terraform" "$env_dir/.terraform.lock.hcl"
-    terraform init -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > /dev/null 2>&1 || true
+    INIT_ERR=$(mktemp)
+    if ! terraform init -input=false -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=terraform/state" > "$INIT_ERR" 2>&1; then
+      echo "Error: 'terraform init' failed for $env_dir." >&2
+      cat "$INIT_ERR" >&2
+      rm -f "$INIT_ERR"
+      rm -rf "$env_dir/.terraform" "$env_dir/.terraform.lock.hcl"
+      exit 1
+    fi
+    rm -f "$INIT_ERR"
 
     if ! terraform output -json app_deploy_github_variables > /dev/null 2>&1; then
       echo "Error: Failed to read 'app_deploy_github_variables' output in $env_dir." >&2

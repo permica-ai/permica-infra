@@ -233,3 +233,13 @@ module "api_gateway" {
   depends_on = [module.apis, module.cloud_run]
 }
 
+resource "google_cloud_run_v2_service_iam_member" "basis_explorer_gateway_invoker" {
+  count = (var.enable_api_gateway && var.enable_cloud_run) ? 1 : 0
+
+  project  = var.project_id
+  location = var.region
+  name     = "permica-basis-explorer-${var.environment}-api"
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${module.api_gateway[0].gateway_service_account}"
+}
+
