@@ -87,6 +87,12 @@ resource "google_project_iam_member" "deployer_cloudscheduler" {
   member  = "serviceAccount:${google_service_account.deployer.email}"
 }
 
+resource "google_project_iam_member" "deployer_cloudsql" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.deployer.email}"
+}
+
 resource "google_project_iam_member" "deployer_secretmanager" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
